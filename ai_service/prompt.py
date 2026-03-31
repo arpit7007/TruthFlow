@@ -15,6 +15,11 @@ Fields:
 - notes
 
 IMPORTANT:
+- Use "survivor" instead of "I" or "witness"
+- timeline.evidence must be array of file names only
+- evidence section contains detailed objects
+- linked_event must be descriptive text, not number
+- do not return empty strings, use null instead
 - Do NOT skip any detail
 - Map files to relevant events
 - Return ONLY valid JSON

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, UploadFile, File, Form
-from typing import List
+from typing import List, Optional
 
 from ai_service.llm import call_llm
 from ai_service.prompt import build_prompt
@@ -7,20 +7,43 @@ from ai_service.parser import extract_json
 
 router = APIRouter()
 
+
 @router.post("/generate-report")
 async def generate_report(
     text: str = Form(...),
-    files: List[UploadFile] = File(default=[])
+    files: Optional[List[UploadFile]] = File(None)  # ✅ MULTIPLE FILES
 ):
-    file_names = [file.filename for file in files]
+    try:
+        # ✅ Handle files safely
+        file_names = []
+        if files:
+            for file in files:
+                if file and file.filename:
+                    file_names.append(file.filename)
 
-    prompt = build_prompt(text, file_names)
+        # ✅ Build prompt
+        prompt = build_prompt(text, file_names)
 
-    raw_output = call_llm(prompt)
+        # ✅ Call LLM
+        raw_output = call_llm(prompt)
 
-    data = extract_json(raw_output)
+        # ✅ Extract JSON
+        data = extract_json(raw_output)
 
-    if not data:
-        return {"error": "Invalid LLM output"}
+        if not data:
+            return {
+                "success": False,
+                "error": "Invalid LLM output",
+                "raw": raw_output  # helpful for debugging
+            }
 
-    return data
+        return {
+            "success": True,
+            "data": data
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
