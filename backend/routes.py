@@ -4,6 +4,7 @@ from typing import List, Optional
 from ai_service.llm import call_llm
 from ai_service.prompt import build_prompt
 from ai_service.parser import extract_json
+from ai_service.utils import normalize_output
 
 router = APIRouter()
 
@@ -36,6 +37,7 @@ async def generate_report(
                 "error": "Invalid LLM output",
                 "raw": raw_output  # helpful for debugging
             }
+        data = normalize_output(data)
 
         return {
             "success": True,
