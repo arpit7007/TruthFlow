@@ -63,9 +63,9 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    const userMsg = { 
-      id: `user-${idCounter.current++}`, 
-      role: 'user', 
+    const userMsg = {
+      id: `user-${idCounter.current++}`,
+      role: 'user',
       content: input,
       attachments: previews
     };
@@ -74,15 +74,34 @@ export default function ChatPage() {
     setAttachments([]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const assistantMsg = { 
+
+    const formData = new FormData();
+    formData.append("text", input)
+
+    const response = await fetch("http://127.0.0.1:8000/generate-report", {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    console.log(data);
+
+    const assistantMsg = { 
         id: `ai-${idCounter.current++}`, 
         role: 'assistant', 
-        content: `I've noted your input ${previews.length > 0 ? `including ${previews.length} attachment(s)` : ''} about "${input.substring(0, 20)}${input.length > 20 ? '...' : ''}". This is recorded under our secure protocol.` 
+        content: data.data 
       };
       setMessages(prev => [...prev, assistantMsg]);
       setIsTyping(false);
-    }, 1500);
+
+    // setTimeout(() => {
+    //   const assistantMsg = { 
+    //     id: `ai-${idCounter.current++}`, 
+    //     role: 'assistant', 
+    //     content: `I've noted your input ${previews.length > 0 ? `including ${previews.length} attachment(s)` : ''} about "${input.substring(0, 20)}${input.length > 20 ? '...' : ''}". This is recorded under our secure protocol.` 
+    //   };
+    //   setMessages(prev => [...prev, assistantMsg]);
+    //   setIsTyping(false);
+    // }, 1500);
   };
 
   const handleClear = () => {
@@ -97,7 +116,7 @@ export default function ChatPage() {
   return (
     <Shell>
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-20" />
-      
+
       <main className="flex-1 flex flex-col h-screen pt-28 pb-64">
         {/* Chat Messages */}
         <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-12 space-y-6 custom-scrollbar">
@@ -114,29 +133,28 @@ export default function ChatPage() {
                   <div className={`p-2 rounded-xl ${msg.role === 'user' ? 'bg-primary/20 text-primary' : 'bg-secondary/20 text-secondary'} border border-white/10 shrink-0`}>
                     {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
-                  
-                  <div className={`max-w-[85%] rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${
-                    msg.role === 'user' 
-                      ? 'bg-primary text-white border-primary/20 rounded-tr-none' 
-                      : 'glass-card text-text-main border-white/10 rounded-tl-none backdrop-blur-3xl'
-                  }`}>
+
+                  <div className={`max-w-[85%] rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${msg.role === 'user'
+                    ? 'bg-primary text-white border-primary/20 rounded-tr-none'
+                    : 'glass-card text-text-main border-white/10 rounded-tl-none backdrop-blur-3xl'
+                    }`}>
                     <p className={`text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'font-medium' : 'font-normal'}`}>
                       {msg.content}
                     </p>
-                    
+
                     {msg.attachments && msg.attachments.length > 0 && (
                       <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {msg.attachments.map((file, idx) => (
-                          <motion.div 
-                            key={idx} 
+                          <motion.div
+                            key={idx}
                             whileHover={{ scale: 1.02 }}
                             className={`relative rounded-xl overflow-hidden border border-white/10 group cursor-pointer ${file.type.startsWith('image/') ? 'aspect-video' : 'p-3 bg-black/20 hover:bg-black/30'} transition-all`}
                           >
                             {file.type.startsWith('image/') ? (
                               <>
-                                <img 
-                                  src={file.url} 
-                                  alt={file.name} 
+                                <img
+                                  src={file.url}
+                                  alt={file.name}
                                   className="w-full h-full object-cover transition-transform group-hover:scale-110"
                                 />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -161,7 +179,7 @@ export default function ChatPage() {
                   </div>
                 </motion.div>
               ))}
-              
+
               {isTyping && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
@@ -173,9 +191,9 @@ export default function ChatPage() {
                   </div>
                   <div className="glass-card p-4 rounded-[1.5rem] rounded-tl-none border-white/10">
                     <div className="flex gap-1.5">
-                       <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce [animation-delay:-0.3s]"></span>
-                       <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce [animation-delay:-0.15s]"></span>
-                       <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce [animation-delay:-0.3s]"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce [animation-delay:-0.15s]"></span>
+                      <span className="h-1.5 w-1.5 rounded-full bg-secondary animate-bounce"></span>
                     </div>
                   </div>
                 </motion.div>
@@ -193,14 +211,14 @@ export default function ChatPage() {
               {/* Attachment Preview Bar */}
               <AnimatePresence>
                 {previews.length > 0 && (
-                  <motion.div 
+                  <motion.div
                     initial={{ opacity: 0, y: 10, scale: 0.95 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     exit={{ opacity: 0, y: 10, scale: 0.95 }}
                     className="flex gap-3 mb-4 overflow-x-auto pb-2 px-2 custom-scrollbar"
                   >
                     {previews.map((file, idx) => (
-                      <motion.div 
+                      <motion.div
                         key={idx}
                         layout
                         initial={{ opacity: 0, scale: 0.8 }}
@@ -209,10 +227,10 @@ export default function ChatPage() {
                         className="relative shrink-0 w-20 h-20 rounded-2xl overflow-hidden glass-card border-white/20 group"
                       >
                         {file.type.startsWith('image/') ? (
-                          <img 
-                            src={file.url} 
+                          <img
+                            src={file.url}
                             alt={file.name}
-                            className="w-full h-full object-cover" 
+                            className="w-full h-full object-cover"
                           />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">
@@ -220,7 +238,7 @@ export default function ChatPage() {
                             <span className="text-[8px] truncate w-full px-1">{file.name}</span>
                           </div>
                         )}
-                        <button 
+                        <button
                           type="button"
                           onClick={() => removeAttachment(idx)}
                           className="absolute top-1 right-1 p-1 bg-rose/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
@@ -237,15 +255,15 @@ export default function ChatPage() {
                 <div className="absolute inset-0 bg-primary/10 blur-xl rounded-full opacity-0 group-focus-within:opacity-100 transition-opacity duration-500" />
                 <div className="relative flex items-center bg-white dark:bg-slate-900 border border-white/20 dark:border-white/10 rounded-full p-1.5 pl-6 shadow-2xl transition-all group-focus-within:border-primary/50">
                   <div className="flex items-center gap-2 mr-2">
-                    <input 
-                      type="file" 
-                      ref={fileInputRef} 
-                      onChange={handleFileSelect} 
-                      multiple 
-                      className="hidden" 
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      onChange={handleFileSelect}
+                      multiple
+                      className="hidden"
                     />
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={() => fileInputRef.current?.click()}
                       className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-text-dim/40 hover:text-primary transition-all"
                     >
@@ -254,8 +272,8 @@ export default function ChatPage() {
                     <button type="button" className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full text-text-dim/40 hover:text-primary transition-all">
                       <Mic className="h-5 w-5" />
                     </button>
-                    <button 
-                      type="button" 
+                    <button
+                      type="button"
                       onClick={handleClear}
                       className="p-2 hover:bg-rose/10 rounded-full text-text-dim/40 hover:text-rose transition-all"
                       title="Clear Chat"
@@ -263,7 +281,7 @@ export default function ChatPage() {
                       <Trash2 className="h-5 w-5" />
                     </button>
                   </div>
-                  
+
                   <input
                     type="text"
                     value={input}
