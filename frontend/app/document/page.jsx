@@ -212,7 +212,7 @@ export default function DocumentPage() {
       <ReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
-        data={response}
+        data={response.data}
       />
     </Shell>
   );
