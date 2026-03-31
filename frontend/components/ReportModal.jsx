@@ -4,6 +4,12 @@ import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Download, FileText } from 'lucide-react';
 
+// helper to clean "null" string
+const clean = (value) => {
+    if (!value || value === "null") return null;
+    return value;
+};
+
 export const ReportModal = ({ isOpen, onClose, data }) => {
     if (!isOpen) return null;
 
@@ -34,35 +40,28 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                 >
 
                     {/* Header */}
-                    <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-10">
+                    <div className="flex items-center justify-between px-8 py-6 border-b sticky top-0 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
                         <div className="flex items-center gap-3">
                             <div className="p-2 bg-primary/10 rounded-xl text-primary">
                                 <FileText className="h-5 w-5" />
                             </div>
                             <div>
-                                <h2 className="text-sm font-black uppercase tracking-[0.2em] text-slate-800 dark:text-white">
+                                <h2 className="text-sm font-black uppercase tracking-[0.2em]">
                                     Security Intelligence Report
                                 </h2>
-                                <p className="text-[10px] text-text-dim/60 font-bold tracking-widest uppercase">
+                                <p className="text-[10px] uppercase tracking-widest">
                                     REF: TF-2026-X892
                                 </p>
                             </div>
                         </div>
 
                         <div className="flex items-center gap-4">
-                            <motion.button
-                                whileHover={{ scale: 1.05 }}
-                                whileTap={{ scale: 0.95 }}
-                                className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full font-bold text-xs tracking-wider uppercase shadow-lg"
-                            >
+                            <motion.button className="flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-full text-xs font-bold uppercase">
                                 <Download className="h-4 w-4" />
                                 Export PDF
                             </motion.button>
 
-                            <button
-                                onClick={onClose}
-                                className="p-2 hover:bg-slate-100 dark:hover:bg-white/5 rounded-full"
-                            >
+                            <button onClick={onClose} className="p-2 rounded-full">
                                 <X className="h-6 w-6" />
                             </button>
                         </div>
@@ -77,8 +76,8 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                         {/* Summary */}
                         <section>
                             <h2 className="text-xl font-semibold">Summary</h2>
-                            <p className="text-gray-700">
-                                {data.summary || "Not available"}
+                            <p>
+                                {clean(data.summary) || "Not available"}
                             </p>
                         </section>
 
@@ -87,15 +86,16 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                             <h2 className="text-xl font-semibold">Timeline</h2>
 
                             {data.timeline?.map((event, index) => (
-                                <div key={index} className="mt-4 p-4 border rounded-xl shadow-sm">
-                                    
+                                <div key={index} className="mt-4 p-4 border rounded-xl">
+
                                     <h3 className="font-semibold">
                                         Event {index + 1}: {event.event}
                                     </h3>
 
                                     <p><strong>Description:</strong> {event.description}</p>
-                                    <p><strong>Time:</strong> {event.time || "Not specified"}</p>
+                                    <p><strong>Time:</strong> {clean(event.time) || "Not specified"}</p>
                                     <p><strong>Location:</strong> {event.location}</p>
+
                                     <p>
                                         <strong>People:</strong>{" "}
                                         {event.people?.length > 0
@@ -123,7 +123,10 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                             <h2 className="text-xl font-semibold">People Involved</h2>
                             <ul className="list-disc ml-6">
                                 {data.people?.map((p, i) => (
-                                    <li key={i}>{p.name}</li>
+                                    <li key={i}>
+                                        {p.name}
+                                        {clean(p.role) && ` (${p.role})`}
+                                    </li>
                                 ))}
                             </ul>
                         </section>
@@ -133,7 +136,10 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                             <h2 className="text-xl font-semibold">Locations</h2>
                             <ul className="list-disc ml-6">
                                 {data.locations?.map((loc, i) => (
-                                    <li key={i}>{loc.name}</li>
+                                    <li key={i}>
+                                        {loc.location}
+                                        {loc.relevant_event && ` (event: ${loc.relevant_event})`}
+                                    </li>
                                 ))}
                             </ul>
                         </section>
@@ -145,7 +151,7 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                                 {data.evidence?.map((e, i) => (
                                     <li key={i}>
                                         {e.file_name}
-                                        {e.linked_event && ` (linked to: ${e.linked_event})`}
+                                        {clean(e.linked_event) && ` (linked to: ${e.linked_event})`}
                                     </li>
                                 ))}
                             </ul>
@@ -154,17 +160,11 @@ export const ReportModal = ({ isOpen, onClose, data }) => {
                         {/* Notes */}
                         <section>
                             <h2 className="text-xl font-semibold">Additional Notes</h2>
-
-                            {data.notes?.length > 0 ? (
-                                <ul className="list-disc ml-6">
-                                    {data.notes.map((note, i) => (
-                                        <li key={i}>{note}</li>
-                                    ))}
-                                </ul>
-                            ) : (
-                                <p className="text-gray-700">None</p>
-                            )}
+                            <p>
+                                {clean(data.notes) || "None"}
+                            </p>
                         </section>
+
                     </div>
                 </motion.div>
             </motion.div>
