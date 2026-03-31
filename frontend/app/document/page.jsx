@@ -1,8 +1,10 @@
+
 'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '../../components/Shell';
+import { ReportModal } from '../../components/ReportModal';
 import { Sparkles, ChevronRight, Zap, Info, Lightbulb, Send, Trash2, CheckCircle2 } from 'lucide-react';
 
 const mockAIQuestions = [
@@ -16,7 +18,10 @@ export default function DocumentPage() {
   const [isEnhanced, setIsEnhanced] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [text, setText] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [showReport, setShowReport] = useState(false);
+  const [response, setResponse] = useState({});
 
   const handleClear = () => {
     if (text.trim() && confirm('Are you sure you want to clear your current work?')) {
@@ -26,10 +31,40 @@ export default function DocumentPage() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!text.trim()) return;
-    setIsSubmitted(true);
-    setTimeout(() => setIsSubmitted(false), 3000);
+
+    // Phase 1: Generating
+    setIsGenerating(true);
+
+    const formData = new FormData();
+    formData.append("text", text)
+
+    const response = await fetch("http://127.0.0.1:8000/generate-report", {
+      method: 'POST',
+      body: formData
+    });
+    const data = await response.json();
+    setResponse(data)
+
+    // console.log("the input was", text);
+    console.log("the response from the llm is: ", data);
+
+
+
+
+
+    // Phase 2: Report Generated (after delay)
+    setTimeout(() => {
+      setIsGenerating(false);
+      setIsSubmitted(true);
+
+      // Phase 3: Open Report Modal (instantly after completion)
+      setTimeout(() => {
+        setIsSubmitted(false);
+        setShowReport(true);
+      }, 1000);
+    }, 2000);
   };
 
   const headerActions = (
@@ -37,11 +72,10 @@ export default function DocumentPage() {
       onClick={() => setIsEnhanced(!isEnhanced)}
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
-      className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-wider uppercase transition-all duration-500 shadow-lg ${
-        isEnhanced 
-          ? 'bg-rose text-white shadow-rose/20' 
-          : 'bg-primary text-white shadow-primary/20'
-      }`}
+      className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-wider uppercase transition-all duration-500 shadow-lg ${isEnhanced
+        ? 'bg-rose text-white shadow-rose/20'
+        : 'bg-primary text-white shadow-primary/20'
+        }`}
     >
       <Sparkles className={`h-4 w-4 ${isEnhanced ? 'animate-pulse' : ''}`} />
       {isEnhanced ? 'Disable Enhancement' : 'Enhanced Report'}
@@ -51,17 +85,16 @@ export default function DocumentPage() {
   return (
     <Shell headerActions={headerActions}>
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-30" />
-      
+
       <main className="flex-1 flex flex-col pt-28 px-8 pb-16 transition-all duration-700 ease-in-out min-h-screen">
         <div className="flex gap-8 transition-all duration-700 ease-in-out min-h-[calc(100vh-12rem)]">
-          
+
           {/* Editor Panel - Pure Solid White for absolute clarity */}
-          <motion.div 
+          <motion.div
             layout
             animate={{ scale: isFocused ? 1.01 : 1, y: isFocused ? -5 : 0 }}
-            className={`flex flex-col flex-1 bg-[#ffffff] dark:bg-black/20 rounded-[2rem] border transition-all duration-500 shadow-2xl overflow-hidden ${
-              isFocused ? 'border-primary/40 shadow-primary/10' : 'border-slate-200 dark:border-white/10'
-            }`}
+            className={`flex flex-col flex-1 bg-[#ffffff] dark:bg-black/20 rounded-[2rem] border transition-all duration-500 shadow-2xl overflow-hidden ${isFocused ? 'border-primary/40 shadow-primary/10' : 'border-slate-200 dark:border-white/10'
+              }`}
           >
             <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-transparent dark:bg-white/5">
               <div className="flex items-center gap-3">
@@ -70,7 +103,7 @@ export default function DocumentPage() {
               </div>
               <span className="text-[10px] font-medium text-slate-300 dark:text-text-dim/30">{text.length} characters</span>
             </div>
-            
+
             <textarea
               value={text}
               onFocus={() => setIsFocused(true)}
@@ -81,7 +114,7 @@ export default function DocumentPage() {
             />
 
             <div className="flex items-center justify-between px-8 py-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-              <button 
+              <button
                 onClick={handleClear}
                 className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-text-dim/60 hover:text-rose transition-colors"
               >
@@ -91,24 +124,35 @@ export default function DocumentPage() {
 
               <motion.button
                 onClick={handleSubmit}
-                disabled={!text.trim() || isSubmitted}
+                disabled={!text.trim() || isGenerating || isSubmitted}
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
-                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-xs tracking-wider uppercase shadow-xl transition-all ${
-                  isSubmitted 
-                    ? 'bg-emerald-500 text-white shadow-emerald-500/20' 
+                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-xs tracking-wider uppercase shadow-xl transition-all ${isSubmitted
+                  ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                  : isGenerating
+                    ? 'bg-primary/50 text-white shadow-primary/10 cursor-wait'
                     : 'bg-primary text-white shadow-primary/20 hover:shadow-primary/40 disabled:opacity-50 disabled:grayscale'
-                }`}
+                  }`}
               >
-                {isSubmitted ? (
+                {isGenerating ? (
+                  <>
+                    <motion.div
+                      animate={{ rotate: 360 }}
+                      transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                    >
+                      <Zap className="h-4 w-4" />
+                    </motion.div>
+                    Generating...
+                  </>
+                ) : isSubmitted ? (
                   <>
                     <CheckCircle2 className="h-4 w-4" />
-                    Submitted Securely
+                    Report Generated
                   </>
                 ) : (
                   <>
                     <Send className="h-4 w-4" />
-                    Submit Report
+                    Generate Report
                   </>
                 )}
               </motion.button>
@@ -131,7 +175,7 @@ export default function DocumentPage() {
                     AI Intelligence Guidance
                   </h3>
                 </div>
-                
+
                 <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar min-w-[320px]">
                   <div className="p-6 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 mb-8">
                     <p className="text-sm font-medium text-text-dim leading-relaxed italic">
@@ -164,6 +208,12 @@ export default function DocumentPage() {
           </AnimatePresence>
         </div>
       </main>
+
+      <ReportModal
+        isOpen={showReport}
+        onClose={() => setShowReport(false)}
+        data={response}
+      />
     </Shell>
   );
 }
