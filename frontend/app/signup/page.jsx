@@ -51,7 +51,7 @@ export default function SignupPage() {
               <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20">
                 <ShieldCheck className="h-8 w-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-text-main">Join the Vault</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-text-main">Join TruthFlow</h1>
               <p className="text-sm text-text-dim/60 font-medium tracking-wide">Create your encrypted identity to begin.</p>
             </div>
 
@@ -116,7 +116,7 @@ export default function SignupPage() {
                   />
                 ) : (
                   <>
-                    <span>Initialize Protocol</span>
+                    <span>Sign up</span>
                     <ArrowRight className="h-4 w-4" />
                   </>
                 )}
@@ -125,8 +125,8 @@ export default function SignupPage() {
 
             {/* Login Link */}
             <p className="text-center text-xs text-text-dim/40 font-medium pt-4">
-              Already have a protocol?{' '}
-              <Link href="/login" className="text-primary font-black uppercase tracking-widest hover:text-primary/80">Access Vault</Link>
+              Already have a account?{' '}
+              <Link href="/login" className="text-primary font-black tracking-widest hover:text-primary/80">Login</Link>
             </p>
           </div>
         </motion.div>

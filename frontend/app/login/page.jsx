@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { useAuth } from '../providers';
 import { useRouter, useSearchParams } from 'next/navigation';
-// import { Mail, Lock, ArrowRight, ShieldCheck, Github } from 'lucide-react';
+import { Mail, Lock, ArrowRight, ShieldCheck, Github } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -50,9 +50,9 @@ export default function LoginPage() {
             {/* Header */}
             <div className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20">
-                {/* <ShieldCheck className="h-8 w-8 text-white" /> */}
+                <ShieldCheck className="h-8 w-8 text-white" />
               </div>
-              <h1 className="text-3xl font-bold tracking-tight text-text-main">Access TruthVault</h1>
+              <h1 className="text-3xl font-bold tracking-tight text-text-main">Access TruthFlow</h1>
               <p className="text-sm text-text-dim/60 font-medium tracking-wide">Enter your secure credentials to proceed.</p>
             </div>
 
@@ -61,7 +61,7 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
-                    {/* <Mail className="h-5 w-5" /> */}
+                    <Mail className="h-5 w-5" />
                   </div>
                   <input
                     type="email"
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
-                    {/* <Lock className="h-5 w-5" /> */}
+                    <Lock className="h-5 w-5" />
                   </div>
                   <input
                     type="password"
@@ -111,40 +111,17 @@ export default function LoginPage() {
                   />
                 ) : (
                   <>
-                    <span>Decrypt Vault</span>
-                    {/* <ArrowRight className="h-4 w-4" /> */}
+                    <span>Login</span>
+                    <ArrowRight className="h-4 w-4" />
                   </>
                 )}
               </motion.button>
             </form>
 
-            {/* Social Login */}
-            <div className="space-y-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200 dark:border-white/10"></div>
-                </div>
-                <div className="relative flex justify-center text-[10px] font-black uppercase tracking-widest">
-                  <span className="bg-white dark:bg-[#0f172a] px-4 text-text-dim/30">Or Secure OAuth</span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <button type="button" className="flex items-center justify-center gap-3 py-3 rounded-2xl border border-slate-200 dark:border-white/10 hover:bg-white/5 transition-all text-sm font-bold text-text-main w-full">
-                  {/* <Github className="h-4 w-4" /> */}
-                  Github
-                </button>
-                <button type="button" className="flex items-center justify-center gap-3 py-3 rounded-2xl border border-slate-200 dark:border-white/10 hover:bg-white/5 transition-all text-sm font-bold text-text-main w-full">
-                  <span className="h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-[8px] text-white font-bold">G</span>
-                  Google
-                </button>
-              </div>
-            </div>
-
             {/* Signup Link */}
             <p className="text-center text-xs text-text-dim/40 font-medium">
-              Don&apos;t have a protocol?{' '}
-              <Link href="/signup" className="text-primary font-black uppercase tracking-widest hover:text-primary/80">Initiate Signup</Link>
+              Don&apos;t have a account?{' '}
+              <Link href="/signup" className="text-primary font-black tracking-widest hover:text-primary/80">Signup</Link>
             </p>
           </div>
         </motion.div>
