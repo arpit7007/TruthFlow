@@ -1,10 +1,12 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
+
 import { Shell } from '../components/Shell';
 import { motion } from 'framer-motion';
 import { MessageCircle, FileText } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useAuth } from './providers';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -37,6 +39,16 @@ const charVariants = {
 
 export default function Home() {
   const headline = "Your Truth, Guided with Care.";
+  const router = useRouter();
+  const { isLoggedIn } = useAuth();
+
+  const handleProtectedNavigation = (path) => {
+    if (isLoggedIn) {
+      router.push(path);
+    } else {
+      router.push(`/login?redirect=${path}`);
+    }
+  };
 
   return (
     <Shell showStatus={true}>
@@ -106,27 +118,25 @@ export default function Home() {
             variants={itemVariants}
             className="flex flex-col items-center justify-center gap-6 sm:flex-row pt-4"
           >
-            <Link href="/document" className="w-full sm:w-auto">
-              <motion.button 
-                whileHover={{ scale: 1.05, y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                className="glow-button group relative flex w-full sm:w-[280px] items-center justify-center gap-4 rounded-[2.5rem] bg-primary px-8 py-5 text-xl font-bold text-white overflow-hidden shadow-2xl shadow-primary/20 whitespace-nowrap"
-              >
-                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-in-out" />
-                <FileText className="h-6 w-6" />
-                Document Story
-              </motion.button>
-            </Link>
-            <Link href="/chat" className="w-full sm:w-auto">
-              <motion.button 
-                whileHover={{ scale: 1.05, y: -5 }}
-                whileTap={{ scale: 0.95 }}
-                className="glass-card group flex w-full sm:w-[280px] items-center justify-center gap-4 px-8 py-5 text-xl font-bold text-text-main hover:bg-white/10 transition-all border-white/20 whitespace-nowrap"
-              >
-                <MessageCircle className="h-6 w-6 group-hover:text-rose transition-colors" />
-                Start Conversation
-              </motion.button>
-            </Link>
+            <motion.button 
+              onClick={() => handleProtectedNavigation('/document')}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="glow-button group relative flex w-full sm:w-[280px] items-center justify-center gap-4 rounded-[2.5rem] bg-primary px-8 py-5 text-xl font-bold text-white overflow-hidden shadow-2xl shadow-primary/20 whitespace-nowrap"
+            >
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent translate-x-[-200%] group-hover:translate-x-[200%] transition-transform duration-1000 ease-in-out" />
+              <FileText className="h-6 w-6" />
+              Document Story
+            </motion.button>
+            <motion.button 
+              onClick={() => handleProtectedNavigation('/chat')}
+              whileHover={{ scale: 1.05, y: -5 }}
+              whileTap={{ scale: 0.95 }}
+              className="glass-card group flex w-full sm:w-[280px] items-center justify-center gap-4 px-8 py-5 text-xl font-bold text-text-main hover:bg-white/10 transition-all border-white/20 whitespace-nowrap"
+            >
+              <MessageCircle className="h-6 w-6 group-hover:text-rose transition-colors" />
+              Start Conversation
+            </motion.button>
           </motion.div>
         </motion.div>
       </main>
