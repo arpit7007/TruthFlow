@@ -122,14 +122,19 @@ export default function DocumentPage() {
     <Shell headerActions={headerActions}>
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-30" />
 
-      <main className="flex-1 flex flex-col pt-28 px-8 pb-16 transition-all duration-700 ease-in-out min-h-screen">
-        <div className="flex gap-8 transition-all duration-700 ease-in-out min-h-[calc(100vh-12rem)]">
+      <main className="h-screen flex flex-col pt-32 px-8 pb-8 overflow-hidden">
+        <div className="flex-1 flex gap-8 min-h-0">
 
           {/* Editor Panel - Pure Solid White for absolute clarity */}
           <motion.div
             layout
-            animate={{ scale: isFocused ? 1.01 : 1, y: isFocused ? -5 : 0 }}
-            className={`flex flex-col flex-1 bg-[#ffffff] dark:bg-black/20 rounded-[2rem] border transition-all duration-500 shadow-2xl overflow-hidden ${isFocused ? 'border-primary/40 shadow-primary/10' : 'border-slate-200 dark:border-white/10'
+            animate={{ 
+              scale: isFocused ? 1.01 : 1, 
+              y: isFocused ? -5 : 0,
+              width: isEnhanced ? '50%' : '100%' 
+            }}
+            transition={{ type: 'spring', damping: 30, stiffness: 150 }}
+            className={`flex flex-col bg-[#ffffff] dark:bg-black/20 rounded-[2rem] border shadow-2xl overflow-hidden ${isFocused ? 'border-primary/40 shadow-primary/10' : 'border-slate-200 dark:border-white/10'
               }`}
           >
             <div className="flex items-center justify-between px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-transparent dark:bg-white/5">
@@ -266,11 +271,11 @@ export default function DocumentPage() {
           <AnimatePresence>
             {isEnhanced && (
               <motion.div
-                initial={{ width: 0, opacity: 0, x: 20 }}
-                animate={{ width: '40%', opacity: 1, x: 0 }}
-                exit={{ width: 0, opacity: 0, x: 20 }}
-                transition={{ type: 'spring', damping: 30, stiffness: 200 }}
-                className="hidden lg:flex flex-col bg-white dark:bg-black/40 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl origin-right"
+                initial={{ width: 0, opacity: 0 }}
+                animate={{ width: '50%', opacity: 1 }}
+                exit={{ width: 0, opacity: 0 }}
+                transition={{ type: 'spring', damping: 30, stiffness: 150 }}
+                className="flex flex-col bg-white dark:bg-black/40 backdrop-blur-xl rounded-[2rem] border border-slate-200 dark:border-white/10 overflow-hidden shadow-2xl origin-right"
               >
                 <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 bg-primary/5 dark:bg-primary/10">
                   <h3 className="flex items-center gap-3 text-sm font-black uppercase tracking-[0.2em] text-primary whitespace-nowrap">
@@ -279,7 +284,7 @@ export default function DocumentPage() {
                   </h3>
                 </div>
 
-                <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar min-w-[320px]">
+                <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar min-w-[500px]">
                   <div className="p-6 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 mb-8">
                     <p className="text-sm font-medium text-text-dim leading-relaxed italic">
                       &quot;I&apos;ve analyzed your initial draft. To strengthen the evidence chain, consider addressing these clarifying questions.&quot;
@@ -305,6 +310,20 @@ export default function DocumentPage() {
                       </p>
                     </motion.div>
                   ))}
+                </div>
+
+                {/* AI Input Footer */}
+                <div className="p-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                  <div className="relative group">
+                    <input 
+                      type="text"
+                      placeholder="Provide additional details or answers here..."
+                      className="w-full bg-white dark:bg-slate-800/50 pl-6 pr-12 py-4 rounded-2xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-primary/50 transition-all text-sm font-medium placeholder:text-slate-400"
+                    />
+                    <button className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
+                      <Send className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
               </motion.div>
             )}
