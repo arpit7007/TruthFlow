@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { useAuth } from '../providers';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Mail, Lock, ArrowRight, ShieldCheck, Github } from 'lucide-react';
+// import { Mail, Lock, ArrowRight, ShieldCheck, Github } from 'lucide-react';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -18,11 +18,11 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      router.push(redirect);
-    }
-  }, [isLoggedIn, router, redirect]);
+  // useEffect(() => {
+  //   if (isLoggedIn) {
+  //     router.push(redirect);
+  //   }
+  // }, [isLoggedIn, router, redirect]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -50,7 +50,7 @@ export default function LoginPage() {
             {/* Header */}
             <div className="text-center space-y-4">
               <div className="mx-auto w-16 h-16 bg-primary rounded-2xl flex items-center justify-center shadow-xl shadow-primary/20">
-                <ShieldCheck className="h-8 w-8 text-white" />
+                {/* <ShieldCheck className="h-8 w-8 text-white" /> */}
               </div>
               <h1 className="text-3xl font-bold tracking-tight text-text-main">Access TruthVault</h1>
               <p className="text-sm text-text-dim/60 font-medium tracking-wide">Enter your secure credentials to proceed.</p>
@@ -61,7 +61,7 @@ export default function LoginPage() {
               <div className="space-y-4">
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
-                    <Mail className="h-5 w-5" />
+                    {/* <Mail className="h-5 w-5" /> */}
                   </div>
                   <input
                     type="email"
@@ -75,7 +75,7 @@ export default function LoginPage() {
 
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
-                    <Lock className="h-5 w-5" />
+                    {/* <Lock className="h-5 w-5" /> */}
                   </div>
                   <input
                     type="password"
@@ -112,7 +112,7 @@ export default function LoginPage() {
                 ) : (
                   <>
                     <span>Decrypt Vault</span>
-                    <ArrowRight className="h-4 w-4" />
+                    {/* <ArrowRight className="h-4 w-4" /> */}
                   </>
                 )}
               </motion.button>
@@ -131,7 +131,7 @@ export default function LoginPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <button type="button" className="flex items-center justify-center gap-3 py-3 rounded-2xl border border-slate-200 dark:border-white/10 hover:bg-white/5 transition-all text-sm font-bold text-text-main w-full">
-                  <Github className="h-4 w-4" />
+                  {/* <Github className="h-4 w-4" /> */}
                   Github
                 </button>
                 <button type="button" className="flex items-center justify-center gap-3 py-3 rounded-2xl border border-slate-200 dark:border-white/10 hover:bg-white/5 transition-all text-sm font-bold text-text-main w-full">

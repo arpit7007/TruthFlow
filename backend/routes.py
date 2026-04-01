@@ -1,51 +1,104 @@
-from fastapi import APIRouter, UploadFile, File, Form
-from typing import List, Optional
 
-from ai_service.llm import call_llm
-from ai_service.prompt import build_prompt
-from ai_service.parser import extract_json
-from ai_service.utils import normalize_output
+from fastapi import APIRouter, UploadFile, File, Form
+from typing import List
+
+# from ai_service.llm import call_llm
+# from ai_service.prompt import build_prompt
+# from ai_service.parser import extract_json
 
 router = APIRouter()
-
 
 @router.post("/generate-report")
 async def generate_report(
     text: str = Form(...),
-    files: Optional[List[UploadFile]] = File(None)  # ✅ MULTIPLE FILES
+    files: List[UploadFile] = File(default=[])
 ):
-    try:
-        # ✅ Handle files safely
-        file_names = []
-        if files:
-            for file in files:
-                if file and file.filename:
-                    file_names.append(file.filename)
 
-        # ✅ Build prompt
-        prompt = build_prompt(text, file_names)
-
-        # ✅ Call LLM
-        raw_output = call_llm(prompt)
-
-        # ✅ Extract JSON
-        data = extract_json(raw_output)
-
-        if not data:
-            return {
-                "success": False,
-                "error": "Invalid LLM output",
-                "raw": raw_output  # helpful for debugging
+    return {
+    "success": "true",
+    "data": {
+        "summary": "null",
+        "timeline": [
+            {
+                "event": "Felt someone was following",
+                "description": "survivor felt like someone was following them while walking home from coaching classes",
+                "time": "late evening (around 8 or 9 PM)",
+                "location": "street near house",
+                "people": [
+                    "unknown person"
+                ],
+                "evidence": [
+                    "injury_photo.jpg"
+                ]
+            },
+            {
+                "event": "Physical struggle and injury",
+                "description": "survivor felt scared and experienced physical struggle, resulting in arm injury",
+                "time": "null",
+                "location": "narrow lane close to house",
+                "people": [
+                    "unknown person"
+                ],
+                "evidence": []
+            },
+            {
+                "event": "Left the scene and went home",
+                "description": "survivor managed to leave the area and returned home in pain",
+                "time": "null",
+                "location": "home",
+                "people": [],
+                "evidence": []
+            },
+            {
+                "event": "Visited City Hospital",
+                "description": "survivor was taken to City Hospital by parents for treatment of arm injury",
+                "time": "null",
+                "location": "City Hospital",
+                "people": [
+                    "parents",
+                    "doctor"
+                ],
+                "evidence": [
+                    "hospital_report.pdf"
+                ]
             }
-        data = normalize_output(data)
-
-        return {
-            "success": True,
-            "data": data
-        }
-
-    except Exception as e:
-        return {
-            "success": False,
-            "error": str(e)
-        }
+        ],
+        "people": [
+            {
+                "name": "unknown person"
+            },
+            {
+                "name": "survivor"
+            }
+        ],
+        "locations": [
+            {
+                "name": "street near house"
+            },
+            {
+                "name": "narrow lane close to house"
+            },
+            {
+                "name": "home"
+            },
+            {
+                "name": "City Hospital"
+            }
+        ],
+        "evidence": [
+            {
+                "file_name": "injury_photo.jpg",
+                "type": "null",
+                "linked_event": "Felt someone was following"
+            },
+            {
+                "file_name": "hospital_report.pdf",
+                "type": "null",
+                "linked_event": "Visited City Hospital"
+            }
+        ],
+        "notes": [
+            "Some details are still blurry, but these are the things I remember."
+        ]
+    }
+}
