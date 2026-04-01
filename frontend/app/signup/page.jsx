@@ -16,30 +16,9 @@ export default function SignupPage() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
 
 
-  const { login, isLoggedIn } = useAuth();
   const router = useRouter();
-
-  // const [name, setName] = useState('');
-  // const [email, setEmail] = useState('');
-  // const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      router.push('/');
-    }
-  }, [isLoggedIn, router]);
-
-  // const handleSubmit = async (e) => {
-  //   e.preventDefault();
-  //   setIsLoading(true);
-
-  //   // Simulate API call
-  //   setTimeout(() => {
-  //     login(email);
-  //     setIsLoading(false);
-  //   }, 1500);
-  // };
 
   const handleSignup = async (data) => {
     // updating the data with the role field for the creation in the database

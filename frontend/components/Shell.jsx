@@ -24,18 +24,10 @@ const mockChatHistory = [
 
 export const Shell = ({ children, headerActions, showStatus = false }) => {
 
-
-
-
-
   const [activeSidebar, setActiveSidebar] = useState(null); // 'chat', 'history', or null
   const pathname = usePathname();
   const router = useRouter();
-  // const { isLoggedIn, logout } = useAuth();
   const isHome = pathname === '/';
-
-
-
 
 
   const { data: session, status } = useSession();
