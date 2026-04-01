@@ -6,7 +6,8 @@ import { Shell } from '../components/Shell';
 import { motion } from 'framer-motion';
 import { MessageCircle, FileText } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from './providers';
+import { redirect } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -38,51 +39,50 @@ const charVariants = {
 };
 
 export default function Home() {
-  const headline = "Your Truth, Guided with Care.";
+  const headline = "TruthFlow, Guided with Care.";
   const router = useRouter();
-  const { isLoggedIn } = useAuth();
 
-  const handleProtectedNavigation = (path) => {
-    if (isLoggedIn) {
-      router.push(path);
-    } else {
-      router.push(`/login?redirect=${path}`);
-    }
-  };
+
+  const { data: session, status } = useSession();
+
+  if (status == "loading") return "Loading..."
+  // if (!session) return redirect("/login")
+
+    console.log(session)
 
   return (
     <Shell showStatus={true}>
       {/* Background Layers */}
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-50" />
-      <div className="absolute inset-0 -z-10 opacity-[0.03] dark:opacity-[0.05]" 
-           style={{ backgroundImage: 'radial-gradient(circle, var(--primary) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
-      
+      <div className="absolute inset-0 -z-10 opacity-[0.03] dark:opacity-[0.05]"
+        style={{ backgroundImage: 'radial-gradient(circle, var(--primary) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+
       {/* Floating Blobs */}
-      <motion.div 
-        animate={{ 
-          x: [0, 80, 0], 
+      <motion.div
+        animate={{
+          x: [0, 80, 0],
           y: [0, 50, 0],
         }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-        className="absolute top-[-15%] right-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[140px] -z-10" 
+        className="absolute top-[-15%] right-[-10%] w-[800px] h-[800px] bg-primary/10 rounded-full blur-[140px] -z-10"
       />
-      <motion.div 
-        animate={{ 
-          x: [0, -60, 0], 
+      <motion.div
+        animate={{
+          x: [0, -60, 0],
           y: [0, 70, 0],
         }}
         transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-        className="absolute bottom-[-20%] left-[-10%] w-[900px] h-[900px] bg-rose/10 rounded-full blur-[140px] -z-10" 
+        className="absolute bottom-[-20%] left-[-10%] w-[900px] h-[900px] bg-rose/10 rounded-full blur-[140px] -z-10"
       />
 
       <main className="flex-1 flex flex-col items-center justify-center px-6 pt-24">
-        <motion.div 
+        <motion.div
           variants={containerVariants}
           initial="hidden"
           animate="visible"
           className="mx-auto max-w-5xl text-center space-y-12"
         >
-          <motion.h1 
+          <motion.h1
             variants={itemVariants}
             className="text-text-main font-header text-5xl leading-[1.1] font-bold md:text-7xl lg:text-8xl tracking-tighter"
           >
@@ -94,7 +94,7 @@ export default function Home() {
                     <motion.span
                       key={charIndex}
                       variants={charVariants}
-                      className={`inline-block ${globalIndex > 11 ? 'text-gradient' : ''}`}
+                      className={`inline-block ${globalIndex > 10 ? 'text-gradient' : ''}`}
                     >
                       {char}
                     </motion.span>
@@ -105,7 +105,7 @@ export default function Home() {
           </motion.h1>
 
           {/* Subheading */}
-          <motion.p 
+          <motion.p
             variants={itemVariants}
             className="text-text-dim mx-auto max-w-2xl text-lg md:text-xl leading-relaxed font-medium tracking-tight"
           >
@@ -114,12 +114,12 @@ export default function Home() {
           </motion.p>
 
           {/* Buttons */}
-          <motion.div 
+          <motion.div
             variants={itemVariants}
             className="flex flex-col items-center justify-center gap-6 sm:flex-row pt-4"
           >
-            <motion.button 
-              onClick={() => handleProtectedNavigation('/document')}
+            <motion.button
+              onClick={() => redirect('/document')}
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               className="glow-button group relative flex w-full sm:w-[280px] items-center justify-center gap-4 rounded-[2.5rem] bg-primary px-8 py-5 text-xl font-bold text-white overflow-hidden shadow-2xl shadow-primary/20 whitespace-nowrap"
@@ -128,8 +128,8 @@ export default function Home() {
               <FileText className="h-6 w-6" />
               Document Story
             </motion.button>
-            <motion.button 
-              onClick={() => handleProtectedNavigation('/chat')}
+            <motion.button
+              onClick={() => redirect('/chat')}
               whileHover={{ scale: 1.05, y: -5 }}
               whileTap={{ scale: 0.95 }}
               className="glass-card group flex w-full sm:w-[280px] items-center justify-center gap-4 px-8 py-5 text-xl font-bold text-text-main hover:bg-white/10 transition-all border-white/20 whitespace-nowrap"

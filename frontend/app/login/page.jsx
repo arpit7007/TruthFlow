@@ -3,42 +3,51 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Shell } from '../../components/Shell';
-import { useAuth } from '../providers';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Mail, Lock, ArrowRight, ShieldCheck, Github } from 'lucide-react';
 import Link from 'next/link';
 
+import { useForm } from "react-hook-form";
+import { ToastContainer, toast } from 'react-toastify';
+
+import { signIn } from 'next-auth/react';
+import { redirect } from 'next/navigation';
+
+
 export default function LoginPage() {
-  const { login, isLoggedIn } = useAuth();
+
+  const { register, handleSubmit, watch, formState: { errors } } = useForm();
+
+  
+
+
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirect = searchParams.get('redirect') || '/';
 
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  // const [email, setEmail] = useState('');
+  // const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
-  // useEffect(() => {
-  //   if (isLoggedIn) {
-  //     router.push(redirect);
-  //   }
-  // }, [isLoggedIn, router, redirect]);
+  const handleLogin = async (d) => {
+    const email = d.email;
+    const password = d.password;
+    console.log(email, password)
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsLoading(true);
-    
-    // Simulate API call
-    setTimeout(() => {
-      login(email);
-      setIsLoading(false);
-    }, 1500);
+    toast.success("User logged in Success")
+
+    await signIn("credentials", {
+      email,
+      password,
+      redirect: true,
+      callbackUrl: '/',
+    });
   };
 
   return (
     <Shell>
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-30" />
-      
+
       <main className="flex-1 flex items-center justify-center px-6 pt-20 pb-12">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
@@ -57,7 +66,7 @@ export default function LoginPage() {
             </div>
 
             {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit(handleLogin)} className="space-y-6">
               <div className="space-y-4">
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
@@ -66,11 +75,11 @@ export default function LoginPage() {
                   <input
                     type="email"
                     required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    {...register("email")}
                     placeholder="Email Address"
                     className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
                   />
+                  {errors.email && <span className="text-red-500 text-xs">Email is required</span>}
                 </div>
 
                 <div className="group relative">
@@ -80,20 +89,12 @@ export default function LoginPage() {
                   <input
                     type="password"
                     required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register("password")}
                     placeholder="Secure Password"
                     className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
                   />
+                  {errors.password && <span className="text-red-500 text-xs">Password is required</span>}
                 </div>
-              </div>
-
-              <div className="flex items-center justify-between px-2">
-                <div className="flex items-center gap-2">
-                  <input type="checkbox" id="remember" className="rounded-md border-white/20 bg-white/5 text-primary focus:ring-primary/20" />
-                  <label htmlFor="remember" className="text-xs text-text-dim/60 font-medium cursor-pointer">Remember device</label>
-                </div>
-                <button type="button" className="text-xs font-bold text-primary hover:text-primary/80 transition-colors uppercase tracking-widest">Forgot Pin?</button>
               </div>
 
               <motion.button
