@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useRef, useEffect } from 'react';
+import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { Send, User, Bot, Loader2, Mic, Paperclip, X, Trash2 } from 'lucide-react';
@@ -152,10 +153,12 @@ export default function ChatPage() {
                           >
                             {file.type.startsWith('image/') ? (
                               <>
-                                <img
+                                <Image
                                   src={file.url}
                                   alt={file.name}
-                                  className="w-full h-full object-cover transition-transform group-hover:scale-110"
+                                  fill
+                                  className="object-cover transition-transform group-hover:scale-110"
+                                  unoptimized
                                 />
                                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                   <span className="text-[10px] text-white font-bold uppercase tracking-widest">View Image</span>
@@ -227,10 +230,12 @@ export default function ChatPage() {
                         className="relative shrink-0 w-20 h-20 rounded-2xl overflow-hidden glass-card border-white/20 group"
                       >
                         {file.type.startsWith('image/') ? (
-                          <img
+                          <Image
                             src={file.url}
                             alt={file.name}
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            unoptimized
                           />
                         ) : (
                           <div className="w-full h-full flex flex-col items-center justify-center p-2 text-center">

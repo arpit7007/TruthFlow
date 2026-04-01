@@ -5,7 +5,9 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { ReportModal } from '../../components/ReportModal';
-import { Sparkles, ChevronRight, Zap, Info, Lightbulb, Send, Trash2, CheckCircle2 } from 'lucide-react';
+import { Sparkles, ChevronRight, Zap, Info, Lightbulb, Send, Trash2, CheckCircle2, Paperclip, X, Image as ImageIcon } from 'lucide-react';
+import { useRef, useEffect } from 'react';
+import Image from 'next/image';
 
 const mockAIQuestions = [
   { id: '1', type: 'Detail', text: 'Can you elaborate on the specific environment where this happened?', icon: <Zap className="h-4 w-4" /> },
@@ -22,12 +24,43 @@ export default function DocumentPage() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showReport, setShowReport] = useState(false);
   const [response, setResponse] = useState({});
+  const [attachments, setAttachments] = useState([]);
+  const fileInputRef = useRef(null);
+
+  // Cleanup object URLs when component unmounts or attachments change
+  useEffect(() => {
+    return () => {
+      attachments.forEach(a => URL.revokeObjectURL(a.previewUrl));
+    };
+  }, [attachments]);
+
+  const handleFileSelect = (e) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files).map(file => ({
+        file,
+        previewUrl: URL.createObjectURL(file)
+      }));
+      setAttachments(prev => [...prev, ...newFiles]);
+    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeAttachment = (index) => {
+    setAttachments(prev => {
+      const newAttachments = [...prev];
+      URL.revokeObjectURL(newAttachments[index].previewUrl);
+      newAttachments.splice(index, 1);
+      return newAttachments;
+    });
+  };
 
   const handleClear = () => {
-    if (text.trim() && confirm('Are you sure you want to clear your current work?')) {
+    if ((text.trim() || attachments.length > 0) && confirm('Are you sure you want to clear your current work?')) {
       setText('');
-    } else if (!text.trim()) {
+      setAttachments([]);
+    } else if (!text.trim() && attachments.length === 0) {
       setText('');
+      setAttachments([]);
     }
   };
 
@@ -38,7 +71,10 @@ export default function DocumentPage() {
     setIsGenerating(true);
 
     const formData = new FormData();
-    formData.append("text", text)
+    formData.append("text", text);
+    attachments.forEach((a, index) => {
+      formData.append(`file_${index}`, a.file);
+    });
 
     const response = await fetch("http://127.0.0.1:8000/generate-report", {
       method: 'POST',
@@ -114,13 +150,80 @@ export default function DocumentPage() {
             />
 
             <div className="flex items-center justify-between px-8 py-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-              <button
-                onClick={handleClear}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-text-dim/60 hover:text-rose transition-colors"
-              >
-                <Trash2 className="h-4 w-4" />
-                Clear
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={handleClear}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-text-dim/60 hover:text-rose transition-colors"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Clear
+                </button>
+
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={handleFileSelect}
+                  multiple
+                  className="hidden"
+                />
+                
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors shrink-0"
+                >
+                  <Paperclip className="h-4 w-4" />
+                  Attach Files
+                </button>
+
+                {/* Attachment Preview Next to Button */}
+                <AnimatePresence>
+                  {attachments.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, width: 0 }}
+                      animate={{ opacity: 1, width: 'auto' }}
+                      exit={{ opacity: 0, width: 0 }}
+                      className="flex items-center gap-2 overflow-hidden border-l border-slate-200 dark:border-white/10 pl-4 ml-2"
+                    >
+                      <div className="flex gap-2 max-w-[200px] md:max-w-[400px] overflow-x-auto py-1 custom-scrollbar scrollbar-hide">
+                        {attachments.map((file, idx) => (
+                          <motion.div
+                            key={idx}
+                            layout
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.8 }}
+                            className="relative shrink-0 w-10 h-10 rounded-lg overflow-hidden bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 group cursor-pointer"
+                          >
+                            {file.file.type.startsWith('image/') ? (
+                              <Image
+                                src={file.previewUrl}
+                                alt={file.file.name}
+                                fill
+                                className="object-cover"
+                                unoptimized
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center bg-primary/5">
+                                <Paperclip className="h-3 w-3 text-primary" />
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeAttachment(idx);
+                              }}
+                              className="absolute inset-0 bg-rose/80 text-white opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </motion.div>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
 
               <motion.button
                 onClick={handleSubmit}
@@ -212,7 +315,7 @@ export default function DocumentPage() {
       <ReportModal
         isOpen={showReport}
         onClose={() => setShowReport(false)}
-        data={response.data}
+        data={response}
       />
     </Shell>
   );
