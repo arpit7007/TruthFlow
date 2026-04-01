@@ -16,7 +16,6 @@ export default function SignupPage() {
   const { register, handleSubmit, watch, formState: { errors } } = useForm();
 
 
-  const { login, isLoggedIn } = useAuth();
   const router = useRouter();
 
   // const [name, setName] = useState('');
