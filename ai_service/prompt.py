@@ -74,6 +74,25 @@ RULES:
 - Keep question simple and relevant
 - If no more questions needed, return: "DONE"
 
+- Assume you can ask up to 10 questions across the conversation
+
+- Identify what important information is MISSING or UNCLEAR in THIS specific case
+- Prioritize questions based on importance and impact on report quality
+
+- Do NOT follow a fixed checklist
+- Do NOT ask unnecessary or obvious questions
+
+- Ask only questions that:
+  • Fill gaps in timeline
+  • Clarify unclear events
+  • Improve evidence mapping
+  • Identify unknown people or roles
+  • Strengthen legal clarity
+
+- Each question should be different depending on the case
+- Avoid repeating similar types of questions unless necessary
+
+
 Previous Q&A:
 {previous_qa}
 
