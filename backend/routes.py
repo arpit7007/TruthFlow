@@ -5,7 +5,8 @@ from ai_service.llm import call_llm
 from ai_service.prompt import (
     build_prompt,
     build_single_question_prompt,
-    build_refine_incremental_prompt
+    build_refine_incremental_prompt,
+    build_chatbot_system_prompt
 )
 from ai_service.parser import extract_json
 from ai_service.utils import normalize_output
@@ -13,11 +14,19 @@ from ai_service.utils import normalize_output
 router = APIRouter()
 
 
+
+
 @router.post("/generate-report")
 async def generate_report(
-    text: str = Form(...),
-    files: Optional[List[UploadFile]] = File(None)  # ✅ MULTIPLE FILES
+#added fallback behaviour to use conversation history as testimony if explicit text is not provided, to make it easier for victims to share their story without needing to write a formal testimony upfront
+    text: str = Form(default=""),
+    conversation_history: str = Form(default=""),
+    files: Optional[List[UploadFile]] = File(None)
 ):
+    """
+    Generate the final legal report from user input.
+    text, conversation_history, and files are all optional.
+    """
     try:
         # ✅ Handle files safely
         file_names = []
@@ -26,8 +35,17 @@ async def generate_report(
                 if file and file.filename:
                     file_names.append(file.filename)
 
-        # ✅ Build prompt
-        prompt = build_prompt(text, file_names)
+        # If no explicit text is provided, attempt to use conversation history as the core testimony.
+        primary_text = text.strip() if text.strip() else conversation_history.strip()
+
+        if not primary_text and not file_names:
+            return {
+                "success": False,
+                "error": "Provide testimony text, conversation history, or at least one file to generate report."
+            }
+
+        # ✅ Build prompt with conversation context
+        prompt = build_prompt(primary_text, file_names, conversation_history)
 
         # ✅ Call LLM
         raw_output = call_llm(prompt)
@@ -117,3 +135,44 @@ async def refine_incremental(
             "success": False,
             "error": str(e)
         }
+        
+@router.post("/chat")
+async def chat_with_bot(
+    message: str = Form(...),
+    conversation_history: str = Form(default="")
+):
+    """
+    Conversational endpoint for chatbot interaction.
+    Uses the chatbot system prompt to have natural dialogue with user.
+    Tracks conversation history and implements comfort checks every 5 questions.
+    Returns natural language response, not JSON.
+    """
+    try:
+        system_prompt = build_chatbot_system_prompt()
+        
+        # Count questions in conversation history to check if we need comfort check
+        # A simple heuristic: count "bot" messages to estimate question count
+        question_count = conversation_history.count("Assistant:") if conversation_history else 0
+        
+        # Build context with conversation history
+        if conversation_history:
+            full_prompt = f"{system_prompt}\n\n--- Conversation History ---\n{conversation_history}\n\nUser: {message}\n\nAssistant:"
+        else:
+            full_prompt = f"{system_prompt}\n\nUser: {message}\n\nAssistant:"
+        
+        # Call LLM
+        raw_output = call_llm(full_prompt)
+
+        return {
+            "success": True,
+            "message": raw_output,
+            "question_count": question_count + 1
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e)
+        }
+        
+        
