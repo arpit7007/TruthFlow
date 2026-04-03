@@ -23,18 +23,26 @@ export default function DocumentPage({ params }) {
 
     const [text, setText] = useState('');
 
+    const [docContent, setDocContent] = useState();
+
+    const [previousQA, setPreviousQA] = useState();
+
+    const [stopCounter, setStopCounter] = useState(0);
+
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
     const [showReport, setShowReport] = useState(false);
     const [response, setResponse] = useState({});
     const [attachments, setAttachments] = useState([]);
     const [guidanceMessages, setGuidanceMessages] = useState([
-        { id: '1', role: 'assistant', content: "I've analyzed your initial draft. To strengthen the evidence chain, consider addressing these clarifying questions." }
+        { id: '1', role: 'assistant', content: "Generating question..." }
     ]);
     const [guidanceInput, setGuidanceInput] = useState('');
     const [isGuidanceTyping, setIsGuidanceTyping] = useState(false);
     const fileInputRef = useRef(null);
     const guidanceEndRef = useRef(null);
+
+
 
     // Cleanup object URLs when component unmounts or attachments change
     useEffect(() => {
@@ -99,9 +107,9 @@ export default function DocumentPage({ params }) {
             body: formData
         })
         const data = await response.json();
-        setResponse(data)
+        setResponse(data.data)
 
-        console.log("the response from the llm is: ", data);
+        console.log("the response from the llm is: ", data.data);
 
 
         // Phase 2: Report Generated (after delay)
@@ -129,37 +137,113 @@ export default function DocumentPage({ params }) {
         setShowReport(true);
     }
 
+    const startEnhancing = async (previous_qa = "") => {
+        setIsEnhanced(!isEnhanced);
+
+        const formData = new FormData();
+        console.log(docContent)
+        formData.append("text", docContent.note)
+        formData.append("report", JSON.stringify(docContent.report))
+        formData.append("previous_qa", previous_qa)
+
+        const response = await fetch("http://127.0.0.1:8000/next-question", {
+            method: "POST",
+            body: formData
+        });
+        const data = await response.json();
+        console.log(data.question)
+        setGuidanceMessages(prev => prev.map(msg => msg.id === '1' ? { ...msg, content: data.question } : msg));
+
+        // update the question in the previous QA variable
+        setPreviousQA(prev => (prev || '') + "question: " + data.question + '\n');
+
+    }
+
 
     const handleGuidanceSend = async (e, directText = null) => {
+
+        setStopCounter(stopCounter + 1);
+
         if (e) e.preventDefault();
         const messageText = directText || guidanceInput;
+
+        // update the previousQA variable
+        const updatedQA = (previousQA || '') + "answer: " + messageText + '\n';
+        setPreviousQA(updatedQA);
+
         if (!messageText.trim() || isGuidanceTyping) return;
 
-        const userMsg = {
-            id: Date.now().toString(),
-            role: 'user',
-            content: messageText
-        };
+        if (stopCounter >= 5) {
 
-        setGuidanceMessages(prev => [...prev, userMsg]);
-        setGuidanceInput('');
-        setIsGuidanceTyping(true);
+            const formData = new FormData();
+            console.log(docContent)
+            formData.append("text", docContent.note + "\nand this is the conversation for enhancing the report: \n" + updatedQA)
+            formData.append("docId", slug)
 
-        // Simulate AI response
-        setTimeout(() => {
-            const assistantMsg = {
-                id: (Date.now() + 1).toString(),
-                role: 'assistant',
-                content: `Thank you for the clarification. I've updated the context. ${directText ? "Is there anything else you'd like to add about this specific point?" : "Shall we continue with the rest of the report?"}`
+            attachments.forEach((a, index) => {
+                formData.append(`file_${index}`, a.file);
+            });
+
+            const response = await fetch("/api/updateReportAndDoc/", {
+                method: 'POST',
+                body: formData
+            })
+            const data = await response.json();
+
+            console.log("the response from the llm is: ", data.data);
+
+            setIsEnhanced(!isEnhanced)
+            setResponse(data.data)
+            setShowReport(true)
+
+        } else {
+
+            const userMsg = {
+                id: Date.now().toString(),
+                role: 'user',
+                content: messageText
             };
-            setGuidanceMessages(prev => [...prev, assistantMsg]);
-            setIsGuidanceTyping(false);
-        }, 1500);
+
+            setGuidanceMessages(prev => [...prev, userMsg]);
+            setGuidanceInput('');
+            setIsGuidanceTyping(true);
+
+            // Simulate AI response
+            setTimeout(async () => {
+                const formData = new FormData();
+                formData.append("text", docContent.note)
+                formData.append("report", JSON.stringify(docContent.report))
+                formData.append("previous_qa", updatedQA)
+
+                const response = await fetch("http://127.0.0.1:8000/next-question", {
+                    method: "POST",
+                    body: formData
+                });
+                const data = await response.json();
+
+                console.log(data.question)
+
+                const assistantMsg = {
+                    id: (Date.now() + 1).toString(),
+                    role: 'assistant',
+                    content: data.question
+                };
+                setGuidanceMessages(prev => [...prev, assistantMsg]);
+                setIsGuidanceTyping(false);
+
+                // update the previousQA variable with the new question given
+                setPreviousQA(prev => (prev || '') + "question: " + data.question + '\n');
+            }, 1500);
+        }
+
+
     };
+
+
 
     const headerActions = (
         <motion.button
-            onClick={() => setIsEnhanced(!isEnhanced)}
+            onClick={startEnhancing}
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-wider uppercase transition-all duration-500 shadow-lg ${isEnhanced
@@ -180,6 +264,7 @@ export default function DocumentPage({ params }) {
 
             console.log("this is the document content", data)
             setText(data.document.note)
+            setDocContent(data.document)
             // console.log(data.document.note)
         }
 
@@ -304,42 +389,42 @@ export default function DocumentPage({ params }) {
 
                             {isEnhanced ? "" : (
                                 <motion.button
-                                onClick={viewReport}
-                                disabled={!text.trim() || isGenerating || isSubmitted}
-                                whileHover={{ scale: 1.02 }}
-                                whileTap={{ scale: 0.98 }}
-                                className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-xs tracking-wider uppercase shadow-xl transition-all ${isSubmitted
-                                    ? 'bg-emerald-500 text-white shadow-emerald-500/20'
-                                    : isGenerating
-                                        ? 'bg-primary/50 text-white shadow-primary/10 cursor-wait'
-                                        : 'bg-primary text-white shadow-primary/20 hover:shadow-primary/40 disabled:opacity-50 disabled:grayscale'
-                                    }`}
-                            >
-                                {isGenerating ? (
-                                    <>
-                                        <motion.div
-                                            animate={{ rotate: 360 }}
-                                            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-                                        >
-                                            <Zap className="h-4 w-4" />
-                                        </motion.div>
-                                        View Report
-                                    </>
-                                ) : isSubmitted ? (
-                                    <>
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        View Report
-                                    </>
-                                ) : (
-                                    <>
-                                        <Send className="h-4 w-4" />
-                                        View Report
-                                    </>
-                                )}
-                            </motion.button>
+                                    onClick={viewReport}
+                                    disabled={!text.trim() || isGenerating || isSubmitted}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className={`flex items-center gap-2 px-8 py-3 rounded-xl font-bold text-xs tracking-wider uppercase shadow-xl transition-all ${isSubmitted
+                                        ? 'bg-emerald-500 text-white shadow-emerald-500/20'
+                                        : isGenerating
+                                            ? 'bg-primary/50 text-white shadow-primary/10 cursor-wait'
+                                            : 'bg-primary text-white shadow-primary/20 hover:shadow-primary/40 disabled:opacity-50 disabled:grayscale'
+                                        }`}
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                            >
+                                                <Zap className="h-4 w-4" />
+                                            </motion.div>
+                                            View Report
+                                        </>
+                                    ) : isSubmitted ? (
+                                        <>
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            View Report
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="h-4 w-4" />
+                                            View Report
+                                        </>
+                                    )}
+                                </motion.button>
                             )}
 
-                            
+
 
                             <motion.button
                                 onClick={handleSubmit}
