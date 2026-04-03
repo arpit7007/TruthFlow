@@ -93,16 +93,6 @@ export default function ChatPage() {
       };
       setMessages(prev => [...prev, assistantMsg]);
       setIsTyping(false);
-
-    // setTimeout(() => {
-    //   const assistantMsg = { 
-    //     id: `ai-${idCounter.current++}`, 
-    //     role: 'assistant', 
-    //     content: `I've noted your input ${previews.length > 0 ? `including ${previews.length} attachment(s)` : ''} about "${input.substring(0, 20)}${input.length > 20 ? '...' : ''}". This is recorded under our secure protocol.` 
-    //   };
-    //   setMessages(prev => [...prev, assistantMsg]);
-    //   setIsTyping(false);
-    // }, 1500);
   };
 
   const handleClear = () => {
@@ -135,11 +125,11 @@ export default function ChatPage() {
                     {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
 
-                  <div className={`max-w-[85%] rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${msg.role === 'user'
+                  <div className={`max-w-[85%] min-w-0 rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${msg.role === 'user'
                     ? 'bg-primary text-white border-primary/20 rounded-tr-none'
                     : 'glass-card text-text-main border-white/10 rounded-tl-none backdrop-blur-3xl'
                     }`}>
-                    <p className={`text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'font-medium' : 'font-normal'}`}>
+                    <p className={`text-sm md:text-base leading-relaxed break-words whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : 'font-normal'}`}>
                       {msg.content}
                     </p>
 

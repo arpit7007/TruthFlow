@@ -1,22 +1,27 @@
-
 'use client';
 
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { ReportModal } from '../../components/ReportModal';
-import { Sparkles, ChevronRight, Zap, Info, Lightbulb, Send, Trash2, CheckCircle2, Paperclip, X, Image as ImageIcon } from 'lucide-react';
+import { Sparkles, ChevronRight, Zap, Info, Lightbulb, Send, Trash2, CheckCircle2, Paperclip, X, Image as ImageIcon, User, Bot, Loader2 } from 'lucide-react';
 import { useRef, useEffect } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
+import { redirect } from 'next/navigation';
 
-const mockAIQuestions = [
-  { id: '1', type: 'Detail', text: 'Can you elaborate on the specific environment where this happened?', icon: <Zap className="h-4 w-4" /> },
-  { id: '2', type: 'Emotion', text: 'How did your perception of the event change after the first few minutes?', icon: <Lightbulb className="h-4 w-4" /> },
-  { id: '3', type: 'Clarification', text: 'Were there any specific sensory details (smells, sounds) that stood out?', icon: <Info className="h-4 w-4" /> },
-  { id: '4', type: 'Context', text: 'Was there anyone else present whose reaction you noticed?', icon: <ChevronRight className="h-4 w-4" /> },
-];
 
 export default function DocumentPage() {
+
+
+  const { data: session, status } = useSession();
+
+
+  // if (!session) return redirect("/login")
+
+  console.log(session)
+
+
   const [isEnhanced, setIsEnhanced] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [text, setText] = useState('');
@@ -25,7 +30,13 @@ export default function DocumentPage() {
   const [showReport, setShowReport] = useState(false);
   const [response, setResponse] = useState({});
   const [attachments, setAttachments] = useState([]);
+  const [guidanceMessages, setGuidanceMessages] = useState([
+    { id: '1', role: 'assistant', content: "I've analyzed your initial draft. To strengthen the evidence chain, consider addressing these clarifying questions." }
+  ]);
+  const [guidanceInput, setGuidanceInput] = useState('');
+  const [isGuidanceTyping, setIsGuidanceTyping] = useState(false);
   const fileInputRef = useRef(null);
+  const guidanceEndRef = useRef(null);
 
   // Cleanup object URLs when component unmounts or attachments change
   useEffect(() => {
@@ -33,6 +44,10 @@ export default function DocumentPage() {
       attachments.forEach(a => URL.revokeObjectURL(a.previewUrl));
     };
   }, [attachments]);
+
+  useEffect(() => {
+    guidanceEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [guidanceMessages, isGuidanceTyping]);
 
   const handleFileSelect = (e) => {
     if (e.target.files) {
@@ -72,23 +87,21 @@ export default function DocumentPage() {
 
     const formData = new FormData();
     formData.append("text", text);
+    formData.append("userId", session.user.id)
+
     attachments.forEach((a, index) => {
       formData.append(`file_${index}`, a.file);
     });
 
-    const response = await fetch("http://127.0.0.1:8000/generate-report", {
+
+    const response = await fetch("/api/saveReportAndDoc/", {
       method: 'POST',
       body: formData
-    });
+    })
     const data = await response.json();
     setResponse(data)
 
-    // console.log("the input was", text);
     console.log("the response from the llm is: ", data);
-
-
-
-
 
     // Phase 2: Report Generated (after delay)
     setTimeout(() => {
@@ -98,28 +111,50 @@ export default function DocumentPage() {
       // Phase 3: Open Report Modal (instantly after completion)
       setTimeout(() => {
         setIsSubmitted(false);
-        setShowReport(true);
+        redirect(`/document/${data.docId}`)
       }, 1000);
     }, 2000);
   };
 
-  const headerActions = (
-    <motion.button
-      onClick={() => setIsEnhanced(!isEnhanced)}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      className={`flex items-center gap-2 px-6 py-2.5 rounded-full font-bold text-xs tracking-wider uppercase transition-all duration-500 shadow-lg ${isEnhanced
-        ? 'bg-rose text-white shadow-rose/20'
-        : 'bg-primary text-white shadow-primary/20'
-        }`}
-    >
-      <Sparkles className={`h-4 w-4 ${isEnhanced ? 'animate-pulse' : ''}`} />
-      {isEnhanced ? 'Disable Enhancement' : 'Enhanced Report'}
-    </motion.button>
-  );
+
+  
+
+
+
+  const handleGuidanceSend = async (e, directText = null) => {
+    if (e) e.preventDefault();
+    const messageText = directText || guidanceInput;
+    if (!messageText.trim() || isGuidanceTyping) return;
+
+    const userMsg = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: messageText
+    };
+
+    setGuidanceMessages(prev => [...prev, userMsg]);
+    setGuidanceInput('');
+    setIsGuidanceTyping(true);
+
+    // Simulate AI response
+    setTimeout(() => {
+      const assistantMsg = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: `Thank you for the clarification. I've updated the context. ${directText ? "Is there anything else you'd like to add about this specific point?" : "Shall we continue with the rest of the report?"}`
+      };
+      setGuidanceMessages(prev => [...prev, assistantMsg]);
+      setIsGuidanceTyping(false);
+    }, 1500);
+  };
+
+
+
+
+  if (status == "loading") return "Loading..."
 
   return (
-    <Shell headerActions={headerActions}>
+    <Shell>
       <div className="absolute inset-0 -z-10 mesh-gradient opacity-30" />
 
       <main className="h-screen flex flex-col pt-32 px-8 pb-8 overflow-hidden">
@@ -128,10 +163,10 @@ export default function DocumentPage() {
           {/* Editor Panel - Pure Solid White for absolute clarity */}
           <motion.div
             layout
-            animate={{ 
-              scale: isFocused ? 1.01 : 1, 
+            animate={{
+              scale: isFocused ? 1.01 : 1,
               y: isFocused ? -5 : 0,
-              width: isEnhanced ? '50%' : '100%' 
+              width: isEnhanced ? '50%' : '100%'
             }}
             transition={{ type: 'spring', damping: 30, stiffness: 150 }}
             className={`flex flex-col bg-[#ffffff] dark:bg-black/20 rounded-[2rem] border shadow-2xl overflow-hidden ${isFocused ? 'border-primary/40 shadow-primary/10' : 'border-slate-200 dark:border-white/10'
@@ -171,7 +206,7 @@ export default function DocumentPage() {
                   multiple
                   className="hidden"
                 />
-                
+
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-2 px-4 py-2 text-xs font-bold uppercase tracking-wider text-primary hover:text-primary/80 transition-colors shrink-0"
@@ -284,45 +319,78 @@ export default function DocumentPage() {
                   </h3>
                 </div>
 
-                <div className="flex-1 p-8 space-y-6 overflow-y-auto custom-scrollbar min-w-[500px]">
-                  <div className="p-6 rounded-2xl bg-white dark:bg-white/5 border border-slate-100 dark:border-white/5 mb-8">
-                    <p className="text-sm font-medium text-text-dim leading-relaxed italic">
-                      &quot;I&apos;ve analyzed your initial draft. To strengthen the evidence chain, consider addressing these clarifying questions.&quot;
-                    </p>
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto p-8 space-y-6 custom-scrollbar">
+                    <AnimatePresence initial={false}>
+                      {guidanceMessages.map((msg, i) => (
+                        <motion.div
+                          key={msg.id || i}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3 }}
+                          className={`flex items-start gap-4 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
+                        >
+                          <div className={`p-2 rounded-xl shrink-0 ${msg.role === 'user' ? 'bg-primary/20 text-primary' : 'bg-primary/10 text-primary'} border border-white/10`}>
+                            {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
+                          </div>
+
+                          <div className={`max-w-[85%] min-w-0 rounded-2xl p-4 shadow-sm border ${msg.role === 'user'
+                            ? 'bg-primary text-white border-primary/20 rounded-tr-none'
+                            : 'bg-white dark:bg-white/5 text-text-main border-slate-100 dark:border-white/5 rounded-tl-none'
+                            }`}>
+                            <p className="text-sm leading-relaxed break-words whitespace-pre-wrap">
+                              {msg.content}
+                            </p>
+                          </div>
+                        </motion.div>
+                      ))}
+
+                      {isGuidanceTyping && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex items-start gap-4"
+                        >
+                          <div className="p-2 rounded-xl bg-primary/10 text-primary border border-white/10 shrink-0">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          </div>
+                          <div className="bg-white dark:bg-white/5 p-4 rounded-2xl rounded-tl-none border border-slate-100 dark:border-white/5">
+                            <div className="flex gap-1.5">
+                              <span className="h-1 w-1 rounded-full bg-primary animate-bounce [animation-delay:-0.3s]"></span>
+                              <span className="h-1 w-1 rounded-full bg-primary animate-bounce [animation-delay:-0.15s]"></span>
+                              <span className="h-1 w-1 rounded-full bg-primary animate-bounce"></span>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <div ref={guidanceEndRef} />
                   </div>
 
-                  {mockAIQuestions.map((q, i) => (
-                    <motion.div
-                      key={q.id}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.1 }}
-                      className="p-6 rounded-2xl bg-white dark:bg-white/5 hover:bg-slate-50 dark:hover:bg-white/10 transition-all group cursor-pointer border border-slate-100 dark:border-white/5 shadow-sm"
+                  {/* AI Input Footer */}
+                  <div className="p-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleGuidanceSend(e);
+                      }}
+                      className="relative group"
                     >
-                      <div className="flex items-center gap-3 mb-3">
-                        <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
-                          {q.icon}
-                        </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-primary/60">{q.type}</span>
-                      </div>
-                      <p className="text-sm font-bold text-text-main group-hover:text-primary transition-colors leading-normal">
-                        {q.text}
-                      </p>
-                    </motion.div>
-                  ))}
-                </div>
-
-                {/* AI Input Footer */}
-                <div className="p-6 border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/5">
-                  <div className="relative group">
-                    <input 
-                      type="text"
-                      placeholder="Provide additional details or answers here..."
-                      className="w-full bg-white dark:bg-slate-800/50 pl-6 pr-12 py-4 rounded-2xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-primary/50 transition-all text-sm font-medium placeholder:text-slate-400"
-                    />
-                    <button className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all">
-                      <Send className="h-4 w-4" />
-                    </button>
+                      <input
+                        type="text"
+                        value={guidanceInput}
+                        onChange={(e) => setGuidanceInput(e.target.value)}
+                        placeholder="Provide additional details or answers here..."
+                        className="w-full bg-white dark:bg-slate-800/50 pl-6 pr-12 py-4 rounded-2xl border border-slate-200 dark:border-white/10 focus:outline-none focus:border-primary/50 transition-all text-sm font-medium placeholder:text-slate-400"
+                      />
+                      <button
+                        type="submit"
+                        disabled={!guidanceInput.trim() || isGuidanceTyping}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 p-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:scale-105 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                      >
+                        <Send className="h-4 w-4" />
+                      </button>
+                    </form>
                   </div>
                 </div>
               </motion.div>
