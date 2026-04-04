@@ -100,20 +100,19 @@ export const ReportModal = ({ isOpen, onClose, data = {} }) => {
                                 <LabelValue label="ID Proof" value={data.victim_details?.id_proof} />
                             </Section>
 
-
-                            {/* Section 3: Incident Details */}
-                            <Section title="Incident Details">
-                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap italic">
-                                    "{clean(data.incident_details)}"
-                                </p>
-                            </Section>
-
                             {/* Section 2: Accused Information */}
                             <Section title="Accused Information">
                                 <LabelValue label="Name" value={data.accused?.name} />
                                 <LabelValue label="Age" value={data.accused?.age} />
                                 <LabelValue label="Description" value={data.accused?.description} />
                                 <LabelValue label="Relationship" value={data.accused?.relationship} />
+                            </Section>
+
+                            {/* Section 3: Incident Details */}
+                            <Section title="Incident Details">
+                                <p className="text-[13px] leading-relaxed whitespace-pre-wrap italic">
+                                    "{clean(data.incident_details)}"
+                                </p>
                             </Section>
 
                             {/* Section 4: Summary */}
