@@ -1,42 +1,36 @@
-import crypto from 'crypto';
+import crypto from "crypto";
 
-const algorithm = 'aes-256-cbc';
-const keyString = process.env.ENCRYPTION_KEY;
-const key = Buffer.from(keyString, 'hex');
-const ivLength = 16;
+const ALGORITHM = "aes-256-cbc";
 
-export function encryptData(text) {
-    if (!text) return text;
-    try {
-        const textStr = typeof text === 'object' ? JSON.stringify(text) : String(text);
-        const iv = crypto.randomBytes(ivLength);
-        const cipher = crypto.createCipheriv(algorithm, key, iv);
-        let encrypted = cipher.update(textStr, 'utf8', 'hex');
-        encrypted += cipher.final('hex');
-        return iv.toString('hex') + ':' + encrypted;
-    } catch(e) {
-        console.error("Encryption error:", e);
-        return text;
-    }
+// MUST be 32 bytes (256 bits)
+const SECRET_KEY = crypto
+  .createHash("sha256")
+  .update(process.env.ENCRYPTION_KEY)
+  .digest();
+
+// IV should be random (16 bytes)
+const IV_LENGTH = 16;
+
+export function encrypt(text) {
+  const iv = crypto.randomBytes(IV_LENGTH);
+
+  const cipher = crypto.createCipheriv(ALGORITHM, SECRET_KEY, iv);
+
+  let encrypted = cipher.update(text, "utf8", "hex");
+  encrypted += cipher.final("hex");
+
+  return iv.toString("hex") + ":" + encrypted;
 }
 
-export function decryptData(text) {
-    if (typeof text !== 'string' || !text.includes(':')) return text;
-    try {
-        const textParts = text.split(':');
-        const iv = Buffer.from(textParts.shift(), 'hex');
-        const encryptedText = Buffer.from(textParts.join(':'), 'hex');
-        const decipher = crypto.createDecipheriv(algorithm, key, iv);
-        let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
-        decrypted += decipher.final('utf8');
-        
-        try {
-            return JSON.parse(decrypted);
-        } catch(err) {
-            return decrypted;
-        }
-    } catch(e) {
-        console.error("Decryption error:", e);
-        return text; // Return unencrypted original on fail
-    }
+export function decrypt(encryptedText) {
+  const [ivHex, encrypted] = encryptedText.split(":");
+
+  const iv = Buffer.from(ivHex, "hex");
+
+  const decipher = crypto.createDecipheriv(ALGORITHM, SECRET_KEY, iv);
+
+  let decrypted = decipher.update(encrypted, "hex", "utf8");
+  decrypted += decipher.final("utf8");
+
+  return decrypted;
 }
