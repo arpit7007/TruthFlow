@@ -2,11 +2,17 @@ def build_prompt(text, files):
     file_text = "\n".join([f"{i+1}. {f}" for i, f in enumerate(files)])
 
     return f"""
-You are a strict JSON generator.
+You are a legal documentation assistant.
 
-Return ONLY valid JSON matching EXACTLY this schema:
+Your task is to convert the testimony into TWO outputs:
+1. A formal Victim Statement Report (text format)
+2. Structured JSON data
+
+Return ONLY JSON in the format below:
 
 {{
+  "report_text": "string",
+
   "summary": "string or null",
   "timeline": [
     {{
@@ -40,10 +46,55 @@ Return ONLY valid JSON matching EXACTLY this schema:
   "notes": "string or null"
 }}
 
+---
+
+REPORT FORMAT INSTRUCTIONS (VERY IMPORTANT):
+
+Generate a formal report in this exact structure:
+
+FORMAT – VICTIM STATEMENT REPORT
+
+1. Heading  
+Date & Time of Recording Statement: (infer or null)  
+Recorded By: TruthFlow  
+
+2. Victim’s Details  
+Full Name: (if not available → null)  
+Date of Birth: (or null)  
+Gender: (or null)  
+Address: (or null)  
+Contact Number: (or null)  
+ID Proof Type & No.: (or null)  
+
+3. Incident Details (Victim Narrative)  
+Write in first person using Survivor instead of "I".  
+Keep it natural but structured.
+
+4. Description of Accused (if known)  
+Name:  
+Age:  
+Physical Description:  
+Relationship:  
+
+5. Witnesses (if any)  
+Include names if mentioned  
+
+6. Medical Examination  
+Mention hospital / doctor if available  
+
+7. Additional Notes by Officer  
+Include emotional state, confusion, memory gaps  
+
+---
+
 STRICT RULES:
-- Return ONLY JSON
-- No explanation
-- No missing fields
+- DO NOT skip any section
+- DO NOT invent details
+- Use null where info missing
+- Use neutral, non-graphic language
+- Convert "I" → "Survivor"
+
+---
 
 IMPORTANT:
 - Use "Survivor" instead of "I" or "witness"

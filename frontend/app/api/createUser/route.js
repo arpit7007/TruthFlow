@@ -10,7 +10,7 @@ export async function POST(request) {
     await connectDb();
 
     try{
-        const {name, email, password} = body
+        const {name, email, birth, address, gender, contact, password} = body
 
         const salt = bcrypt.genSaltSync(10);
         const hash = bcrypt.hashSync(password, salt);
@@ -18,6 +18,10 @@ export async function POST(request) {
         const newUser = await User.create({
             name: name,
             email: email,
+            birth: birth,
+            address: address,
+            gender: gender,
+            contact: contact,
             password: hash
         })
 
