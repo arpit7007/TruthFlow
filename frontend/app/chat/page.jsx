@@ -63,9 +63,9 @@ export default function ChatPage() {
     e.preventDefault();
     if (!input.trim() || isTyping) return;
 
-    const userMsg = { 
-      id: `user-${idCounter.current++}`, 
-      role: 'user', 
+    const userMsg = {
+      id: `user-${idCounter.current++}`,
+      role: 'user',
       content: input,
       attachments: previews
     };
@@ -74,15 +74,57 @@ export default function ChatPage() {
     setAttachments([]);
     setIsTyping(true);
 
-    setTimeout(() => {
-      const assistantMsg = { 
-        id: `ai-${idCounter.current++}`, 
-        role: 'assistant', 
-        content: `I've noted your input ${previews.length > 0 ? `including ${previews.length} attachment(s)` : ''} about "${input.substring(0, 20)}${input.length > 20 ? '...' : ''}". This is recorded under our secure protocol.` 
+    // Build conversation history string for context
+    const conversationHistory = messages
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n');
+
+    const formData = new FormData();
+    formData.append("message", input);
+    formData.append("conversation_history", conversationHistory);
+
+    if (messages.length >= 7) {
+        setShowGenerateReport(!showGenerateReport);
+      }
+
+    try {
+       
+        const response = await fetch("http://127.0.0.1:8000/chat", {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        console.log(data);
+
+        if (data.success) {
+          const newQuestionCount = data.question_count || (questionCount + 1);
+          setQuestionCount(newQuestionCount);
+
+          const assistantMsg = {
+            id: `ai-${idCounter.current++}`,
+            role: 'assistant',
+            content: data.message
+          };
+          setMessages(prev => [...prev, assistantMsg]);
+
+          // Show generate report button after the bot mentions it or at appropriate times
+          if (data.message.toLowerCase().includes('generate report') || data.message.toLowerCase().includes('click')) {
+            setShowGenerateReport(true);
+          }
+        }
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMsg = {
+        id: `ai-${idCounter.current++}`,
+        role: 'assistant',
+        content: 'Sorry, there was an error processing your message. Please try again.'
       };
-      setMessages(prev => [...prev, assistantMsg]);
-      setIsTyping(false);
-    }, 1500);
+      setMessages(prev => [...prev, errorMsg]);
+
+    }
+    setIsTyping(false);
+
+
   };
 
   const handleClear = () => {

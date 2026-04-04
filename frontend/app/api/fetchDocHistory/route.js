@@ -1,6 +1,5 @@
 import connectDb from "../../connectDb";
 import User from "../../models/User";
-import Document from "../../models/Document";
 
 export async function GET(request) {
     await connectDb();
@@ -15,6 +14,8 @@ export async function GET(request) {
     const user = await User.findById(userId).populate("DocumentHistory");
 
     console.log("POPULATED:", user);
+
+
 
 
     return Response.json({ DocHistory: user.DocumentHistory });

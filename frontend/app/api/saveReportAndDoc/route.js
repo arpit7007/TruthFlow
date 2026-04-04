@@ -2,6 +2,9 @@ import connectDb from "../../connectDb";
 import User from "../../models/User";
 import Document from "../../models/Document";
 
+import { encrypt, decrypt } from "../../utils/crypto"
+
+
 export async function POST(request) {
     const formData = await request.formData();
 
@@ -30,8 +33,8 @@ export async function POST(request) {
 
 
     const createDocument = await Document.create({
-        note: text,
-        report: data.data
+        note: encrypt(text),
+        report: encrypt(data.data)
     })
 
     const updateUserHistory = await User.findByIdAndUpdate(userId, { $push: { DocumentHistory: createDocument._id } });
