@@ -169,7 +169,7 @@ export default function ChatPage() {
       console.log('Note saved:', data);
 
       if (data.docId) {
-        router.push(`/document/${data.docId}`);
+        router.push(`/document/${data.docId}?fromChat=true`);
       } else {
         alert('Error saving conversation');
       }

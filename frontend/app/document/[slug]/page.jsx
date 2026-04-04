@@ -20,6 +20,13 @@ export default function DocumentPage({ params }) {
 
     const [isEnhanced, setIsEnhanced] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
+    const [showInitialActionDialog, setShowInitialActionDialog] = useState(false);
+
+    useEffect(() => {
+        if (typeof window !== 'undefined' && window.location.search.includes('fromChat=true')) {
+            setShowInitialActionDialog(true);
+        }
+    }, []);
 
     const [text, setText] = useState('');
 
@@ -560,6 +567,68 @@ export default function DocumentPage({ params }) {
                     </AnimatePresence>
                 </div>
             </main>
+
+            <AnimatePresence>
+                {showInitialActionDialog && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 p-8 rounded-[2rem] shadow-2xl max-w-md w-full"
+                        >
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="p-3 bg-primary/10 rounded-xl">
+                                    <Sparkles className="h-6 w-6 text-primary" />
+                                </div>
+                                <h2 className="text-xl font-bold text-slate-900 dark:text-white">Note Saved Successfully</h2>
+                            </div>
+                            <p className="text-slate-600 dark:text-slate-300 mb-8 leading-relaxed">
+                                Your conversation has been converted into a note. What would you like to do next?
+                            </p>
+                            <div className="flex flex-col gap-3">
+                                <button
+                                    onClick={() => {
+                                        setShowInitialActionDialog(false);
+                                        // Wait a bit to ensure text is populated if it wasn't
+                                        setTimeout(() => handleSubmit(), 100);
+                                    }}
+                                    disabled={!text.trim() || isGenerating || isSubmitted}
+                                    className="flex justify-center items-center gap-2 px-6 py-3 bg-primary text-white rounded-xl font-bold shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isGenerating ? (
+                                        <>
+                                            <motion.div
+                                                animate={{ rotate: 360 }}
+                                                transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+                                            >
+                                                <Zap className="h-4 w-4" />
+                                            </motion.div>
+                                            Generating...
+                                        </>
+                                    ) : isSubmitted ? (
+                                        <>
+                                            <CheckCircle2 className="h-4 w-4" />
+                                            Report Generated
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Send className="h-4 w-4" />
+                                            Generate Report Now
+                                        </>
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setShowInitialActionDialog(false)}
+                                    className="px-6 py-3 bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 rounded-xl font-bold transition-all"
+                                >
+                                    Edit the Note First
+                                </button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <ReportModal
                 isOpen={showReport}
