@@ -18,16 +18,16 @@ router = APIRouter()
 
 @router.post("/generate-report")
 async def generate_report(
-#added fallback behaviour to use conversation history as testimony if explicit text is not provided, to make it easier for victims to share their story without needing to write a formal testimony upfront
+
     text: str = Form(...),
-    files: Optional[List[UploadFile]] = File(None)  # ✅ MULTIPLE FILES
+    files: Optional[List[UploadFile]] = File(None)  
 ):
     """
     Generate the final legal report from user input.
     text, conversation_history, and files are all optional.
     """
     try:
-        # ✅ Handle files safely
+        
         file_names = []
         if files:
             for file in files:
@@ -36,20 +36,20 @@ async def generate_report(
 
         print(text)
 
-        # ✅ Build prompt
+       
         prompt = build_prompt(text, file_names)
 
-        # ✅ Call LLM
+        
         raw_output = call_llm(prompt)
 
-        # ✅ Extract JSON
+      
         data = extract_json(raw_output)
 
         if not data:
             return {
                 "success": False,
                 "error": "Invalid LLM output",
-                "raw": raw_output  # helpful for debugging
+                "raw": raw_output  
             }
         data = normalize_output(data)
 
@@ -65,7 +65,7 @@ async def generate_report(
         }
 
 
-# enhance report
+
 @router.post("/next-question")
 async def next_question(
     text: str = Form(...),
@@ -142,17 +142,15 @@ async def chat_with_bot(
     try:
         system_prompt = build_chatbot_system_prompt()
         
-        # Count questions in conversation history to check if we need comfort check
-        # A simple heuristic: count "bot" messages to estimate question count
+      
         question_count = conversation_history.count("Assistant:") if conversation_history else 0
         
-        # Build context with conversation history
+     
         if conversation_history:
             full_prompt = f"{system_prompt}\n\n--- Conversation History ---\n{conversation_history}\n\nUser: {message}\n\nAssistant:"
         else:
             full_prompt = f"{system_prompt}\n\nUser: {message}\n\nAssistant:"
-        
-        # Call LLM
+      
         raw_output = call_llm(full_prompt)
 
         return {

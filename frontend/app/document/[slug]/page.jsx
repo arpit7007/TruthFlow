@@ -21,10 +21,12 @@ export default function DocumentPage({ params }) {
     const [isEnhanced, setIsEnhanced] = useState(false);
     const [isFocused, setIsFocused] = useState(false);
     const [showInitialActionDialog, setShowInitialActionDialog] = useState(false);
+    const [viewReportButton, setViewReportButton] = useState(true);
 
     useEffect(() => {
         if (typeof window !== 'undefined' && window.location.search.includes('fromChat=true')) {
             setShowInitialActionDialog(true);
+            setViewReportButton(false)
         }
     }, []);
 
@@ -181,12 +183,13 @@ export default function DocumentPage({ params }) {
 
         if (!messageText.trim() || isGuidanceTyping) return;
 
-        if (stopCounter >= 5) {
+        if (stopCounter >= 4) {
 
             const formData = new FormData();
             console.log(docContent)
             formData.append("text", docContent.note + "\nTHIS WAS THE ENHANCING SESSION TAKEN BY THE USER: \n" + updatedQA)
             formData.append("docId", slug)
+            formData.append("userId", session.user.id)
 
             attachments.forEach((a, index) => {
                 formData.append(`file_${index}`, a.file);
@@ -394,8 +397,7 @@ export default function DocumentPage({ params }) {
                                     )}
                                 </AnimatePresence>
                             </div>
-
-                            {isEnhanced ? "" : (
+                            {viewReportButton && !isEnhanced && (
                                 <motion.button
                                     onClick={viewReport}
                                     disabled={!text.trim() || isGenerating || isSubmitted}
@@ -430,7 +432,9 @@ export default function DocumentPage({ params }) {
                                         </>
                                     )}
                                 </motion.button>
-                            )}
+                            )
+                            }
+
 
 
 

@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, History, ShieldCheck, BookOpen, ArrowLeft, MessageSquare } from 'lucide-react';
+import { X, History, ShieldCheck, BookOpen, ArrowLeft, MessageSquare, Trash2, AlertTriangle } from 'lucide-react';
 import { ThemeToggle } from './ThemeToggle';
 import Link from 'next/link';
 import { redirect, usePathname, useRouter } from 'next/navigation';
 import { signOut } from "next-auth/react"
 import { useSession } from 'next-auth/react';
+import { toast } from 'react-toastify';
 
 // const mockHistory = [
 //   { id: '1', title: 'Security Protocol Alpha', date: '2 mins ago', status: 'Secured' },
@@ -31,6 +32,9 @@ export const Shell = ({ children, headerActions, showStatus = false }) => {
 
 
   const [mockHistory, setMockHistory] = useState([])
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+
 
 
   const { data: session, status } = useSession();
@@ -39,16 +43,31 @@ export const Shell = ({ children, headerActions, showStatus = false }) => {
 
   console.log(session)
 
+  const handleDeletion = async (itemToDelete) => {
+    console.log("wassup", itemToDelete)
+    const itemId = itemToDelete.id;
+
+    const response = await fetch(`/api/deleteNote?noteId=${itemToDelete.id}`, {method: "POST"})
+    const data = await response.json();
+    console.log("DELETED IG: ", data);
+
+    if(response.ok){
+      toast.success("deleted note successfully")
+      fetchHistory();
+    }
+
+  }
+
+  const fetchHistory = async () => {
+    const response = await fetch(`/api/fetchDocHistory?userId=${encodeURIComponent(session.user.id)}`, )
+
+    const data = await response.json();
+
+    console.log(data)
+    setMockHistory(data.DocHistory)
+  }
 
   useEffect(() => {
-    const fetchHistory = async () => {
-      const response = await fetch(`/api/fetchDocHistory?userId=${encodeURIComponent(session.user.id)}`, )
-
-      const data = await response.json();
-
-      console.log(data)
-      setMockHistory(data.DocHistory)
-    }
     if(session){
       fetchHistory();
     }
@@ -107,10 +126,27 @@ export const Shell = ({ children, headerActions, showStatus = false }) => {
                   ))
                 ) : (
                   mockHistory.map((item, index) => (
-                    <motion.div onClick={()=> {redirect(`/document/${item._id}`)}} key={index} whileHover={{ x: 5 }} className="p-5 rounded-2xl glass-card transition-all cursor-pointer group hover:border-primary/30">
-                      <div className="flex items-start justify-between mb-2">
+                    <motion.div 
+                      onClick={()=> {redirect(`/document/${item._id}`)}} 
+                      key={index} 
+                      whileHover={{ x: 5 }} 
+                      className="p-5 rounded-2xl glass-card transition-all cursor-pointer group hover:border-primary/30 relative overflow-hidden"
+                    >
+                      <div className="flex items-center justify-between mb-2">
                         <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary/60 group-hover:text-primary transition-colors">secured</span>
-                        {/* <span className="text-[10px] font-medium text-text-dim/40 italic">{item.date}</span> */}
+                        <motion.button
+                          whileHover={{ scale: 1.2, color: '#ff4b4b' }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setItemToDelete({ id: item._id, index });
+                            setDeleteConfirmOpen(true);
+                          }}
+                          className="p-1 px-2 text-text-dim/40 hover:text-rose transition-colors relative z-10"
+                          title="Delete Case File"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </motion.button>
                       </div>
                       <h3 className="font-header text-sm font-bold text-text-main group-hover:text-primary transition-colors truncate">CASE FILE #{index+1}</h3>
                     </motion.div>
@@ -257,6 +293,57 @@ export const Shell = ({ children, headerActions, showStatus = false }) => {
       </header>
 
       {children}
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteConfirmOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setDeleteConfirmOpen(false)}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-[2.5rem] border border-slate-200 dark:border-white/10 shadow-2xl overflow-hidden"
+            >
+              <div className="p-8 text-center">
+                <div className="mx-auto w-16 h-16 bg-rose/10 rounded-2xl flex items-center justify-center mb-6">
+                  <AlertTriangle className="h-8 w-8 text-rose" />
+                </div>
+                <h3 className="text-xl font-bold text-text-main mb-2">Delete Case File?</h3>
+                <p className="text-sm text-text-dim/60 mb-8 leading-relaxed">
+                  This action will permanently remove <span className="text-text-main font-bold">CASE FILE #{itemToDelete?.index + 1}</span>. 
+                  This process is irreversible and all associated data will be purged.
+                </p>
+                <div className="grid grid-cols-2 gap-4">
+                  <button
+                    onClick={() => setDeleteConfirmOpen(false)}
+                    className="px-6 py-3 rounded-xl border border-slate-200 dark:border-white/10 text-sm font-bold uppercase tracking-widest text-text-dim hover:bg-slate-50 dark:hover:bg-white/5 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={() => {
+                      // Dummy delete action
+                      // console.log("Deleting item:", itemToDelete);
+                      setDeleteConfirmOpen(false);
+                      handleDeletion(itemToDelete)
+                    }}
+                    className="px-6 py-3 rounded-xl bg-rose text-white text-sm font-bold uppercase tracking-widest hover:bg-rose/90 shadow-lg shadow-rose/20 transition-all"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

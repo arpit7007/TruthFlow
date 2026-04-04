@@ -83,7 +83,57 @@ Return ONLY valid JSON matching EXACTLY this schema:
 
 ---
 
+THINKING PROCESS (DO NOT OUTPUT):
+
+1. Read the testimony carefully
+
+2. Extract all entities:
+   - people (victim, accused, others)
+   - locations
+   - dates and times
+   - evidence (files mentioned)
+   - Extract explicitly stated AND clearly implied information
+   - If user details (name, contact, etc.) are present in testimony, extract them into victim_details
+
+3. Identify the sequence of events step-by-step
+
+4. Identify:
+   - accused details (if present)
+   - witnesses (separate individuals)
+   - medical information
+
+5. Map extracted information into:
+   - timeline (chronological order)
+   - people list (with roles if possible)
+   - locations linked to events
+
+6. Ensure:
+   - no duplication
+   - no mixing of multiple people into one object
+
+7. PRIORITY:
+   - Prioritize extracting victim details, incident details, and timeline before optional fields
+
+8. Fill missing fields with null
+
+9. Validate structure before output
+
+IMPORTANT:
+- Think step-by-step internally
+- DO NOT output reasoning
+- ONLY output final JSON
+
+IMPORTANT:
+- Think step-by-step internally
+- DO NOT output reasoning
+- ONLY output final JSON
+
+---
+
 STRICT RULES:
+- summary MUST always be generated based on the testimony, even if brief
+- summary should capture what happened, where, and impact in 1–2 lines
+- do NOT return null for summary unless testimony is completely empty
 - Extract ALL details from testimony
 - Do NOT invent missing data → use null
 - Maintain legal tone (neutral, non-graphic)
@@ -93,6 +143,9 @@ STRICT RULES:
 - Witnesses must be separated properly
 - Accused details must be extracted if present
 - Medical info must be extracted if mentioned
+- Before returning, ensure JSON is valid and complete
+- Ensure witnesses are separate objects (not merged)
+- Ensure all brackets are properly closed
 
 ---
 
@@ -107,33 +160,42 @@ def build_single_question_prompt(text, current_report, previous_qa=""):
     return f"""
 You are an intelligent legal assistant.
 
-Your task is to ask ONE next best question to improve the report.
+Your task is to ask ONE highly relevant question to improve the report.
+
+---
+
+THINKING PROCESS (DO NOT OUTPUT):
+
+1. Analyze the testimony carefully
+2. Analyze the current structured report
+3. Identify missing or weak areas:
+   - timeline gaps
+   - unclear events
+   - missing people / roles
+   - missing location details
+   - missing evidence
+   - missing accused details
+   - missing medical info
+4. Check what has already been asked in previous_qa
+5. Select the MOST important missing piece
+6. Form ONE clear, simple question to fill that gap
+
+IMPORTANT:
+- Think step-by-step internally
+- DO NOT output reasoning
+- ONLY output final JSON
+
+---
 
 RULES:
 - Ask ONLY ONE question
 - Do NOT repeat previous questions
-- Focus on missing or unclear details
-- Keep question simple and relevant
-- If no more questions needed, return: "DONE"
+- Do NOT ask generic questions
+- Focus on highest impact missing detail
+- Keep question simple and clear
+- If no important information is missing → return "DONE"
 
-- Assume you can ask up to 10 questions across the conversation
-
-- Identify what important information is MISSING or UNCLEAR in THIS specific case
-- Prioritize questions based on importance and impact on report quality
-
-- Do NOT follow a fixed checklist
-- Do NOT ask unnecessary or obvious questions
-
-- Ask only questions that:
-  • Fill gaps in timeline
-  • Clarify unclear events
-  • Improve evidence mapping
-  • Identify unknown people or roles
-  • Strengthen legal clarity
-
-- Each question should be different depending on the case
-- Avoid repeating similar types of questions unless necessary
-
+---
 
 Previous Q&A:
 {previous_qa}
@@ -143,6 +205,8 @@ Testimony:
 
 Current Report:
 {current_report}
+
+---
 
 Return ONLY JSON:
 
