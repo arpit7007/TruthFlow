@@ -78,6 +78,61 @@ export default function SignupPage() {
                   {errors.name && <span className="text-red-500 text-xs">Name is required</span>}
                 </div>
 
+
+                {/* date of birth, gender, address, contact number */}
+
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="date"
+                    {...register("birth", { required: true })}
+                    placeholder=""
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
+                  />
+                  {errors.birth && <span className="text-red-500 text-xs">date of birth is required</span>}
+                </div>
+
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="text"
+                    {...register("gender", { required: true })}
+                    placeholder="gender"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
+                  />
+                  {errors.gender && <span className="text-red-500 text-xs">gender is required</span>}
+                </div>
+
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="address"
+                    {...register("address", { required: true })}
+                    placeholder="address"
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
+                  />
+                  {errors.address && <span className="text-red-500 text-xs">address is required</span>}
+                </div>
+
+                <div className="group relative">
+                  <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    type="number"
+                    {...register("contact", { required: true })}
+                    placeholder="contact no."
+                    className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl py-4 pl-14 pr-6 text-sm focus:outline-none focus:border-primary/50 focus:ring-4 focus:ring-primary/10 transition-all placeholder:text-text-dim/30"
+                  />
+                  {errors.contact && <span className="text-red-500 text-xs">contact is required</span>}
+                </div>
+
                 <div className="group relative">
                   <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none text-text-dim/40 group-focus-within:text-primary transition-colors">
                     <Mail className="h-5 w-5" />

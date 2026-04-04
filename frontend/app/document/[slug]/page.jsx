@@ -177,7 +177,7 @@ export default function DocumentPage({ params }) {
 
             const formData = new FormData();
             console.log(docContent)
-            formData.append("text", docContent.note + "\nand this is the conversation for enhancing the report: \n" + updatedQA)
+            formData.append("text", docContent.note + "\nTHIS WAS THE ENHANCING SESSION TAKEN BY THE USER: \n" + updatedQA)
             formData.append("docId", slug)
 
             attachments.forEach((a, index) => {
