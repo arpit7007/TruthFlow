@@ -77,19 +77,20 @@ export default function ChatPage() {
 
 
     const formData = new FormData();
-    formData.append("text", input)
+    formData.append("message", input)
+    formData.append("conversation_history", JSON.stringify(messages))
 
-    const response = await fetch("http://127.0.0.1:8000/generate-report", {
+    const response = await fetch("http://127.0.0.1:8000/chat", {
       method: 'POST',
       body: formData
     });
     const data = await response.json();
-    console.log(data);
+    console.log("THE DATA FROM THE LLM IS: ", data);
 
     const assistantMsg = { 
         id: `ai-${idCounter.current++}`, 
         role: 'assistant', 
-        content: data.data 
+        content: data.message 
       };
       setMessages(prev => [...prev, assistantMsg]);
       setIsTyping(false);
