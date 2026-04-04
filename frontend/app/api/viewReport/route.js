@@ -14,6 +14,6 @@ export async function GET(request) {
 
     const document = await Document.findById(docId);
 
-    return Response.json({ data: decrypt(document.report) });
+    return Response.json({ data: document.report });
 
 }

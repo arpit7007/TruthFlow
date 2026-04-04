@@ -2,8 +2,9 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Download, Edit } from 'lucide-react';
+import { X, Download, Edit, Brain } from 'lucide-react';
 import { EditorModal } from './EditorModal';
+import { useRouter } from 'next/navigation';
 
 const clean = (value) => {
     if (!value || value === "null" || value === "None") return "N/A";
@@ -28,9 +29,10 @@ const LabelValue = ({ label, value }) => (
     </div>
 );
 
-export const ReportModal = ({ isOpen, onClose, data = {} }) => {
+export const ReportModal = ({ isOpen, onClose, data = {}, docId, localAttachments = [] }) => {
     const [isEditorOpen, setIsEditorOpen] = useState(false);
     const reportRef = useRef(null);
+    const router = useRouter();
 
     const handleExportPDF = async () => {
         try {
@@ -86,6 +88,17 @@ export const ReportModal = ({ isOpen, onClose, data = {} }) => {
                             <p className="text-[10px] opacity-70 text-black">CONFIDENTIAL DOCUMENT • FOR OFFICIAL USE ONLY</p>
                         </div>
                         <div className="flex items-center gap-3">
+                            {docId && (
+                                <motion.button 
+                                    onClick={() => router.push(`/document/${docId}/analysis`)}
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    className="flex items-center gap-2 px-6 py-2.5 bg-indigo-600 text-white rounded-lg text-xs font-bold uppercase tracking-widest shadow-lg transition-all"
+                                >
+                                    <Brain className="h-4 w-4" />
+                                    Analyse Report
+                                </motion.button>
+                            )}
                             <motion.button 
                                 onClick={() => setIsEditorOpen(true)}
                                 whileHover={{ scale: 1.02 }}
@@ -114,8 +127,8 @@ export const ReportModal = ({ isOpen, onClose, data = {} }) => {
                     </div>
 
                     {/* Report Content (Notepad Style) */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar bg-white text-black" ref={reportRef}>
-                        <div className="max-w-4xl mx-auto px-10 py-12 text-black">
+                    <div className="flex-1 overflow-y-auto custom-scrollbar bg-white text-black">
+                        <div className="max-w-4xl mx-auto px-10 py-12 text-black" ref={reportRef}>
                             
                             {/* Document Heading */}
                             <div className="mb-12 border-b-2 border-black pb-6 text-center text-black">
@@ -203,7 +216,22 @@ export const ReportModal = ({ isOpen, onClose, data = {} }) => {
                                     <div key={idx} className="text-[12px] text-black">
                                         [FILE_{idx+1}]: {e.file_name} (Linked to: {e.linked_event})
                                     </div>
-                                )) : <p className="text-[13px] text-black">No evidence files attached.</p>}
+                                )) : null}
+                                {localAttachments?.length > 0 ? localAttachments.map((att, idx) => (
+                                    <div key={`local-${idx}`} className="mt-4 mb-4">
+                                        <p className="text-[12px] font-bold uppercase mb-2 text-black">Attached Evidence {idx + 1}: {att.file.name}</p>
+                                        {att.file.type.startsWith('image/') && (
+                                            <img 
+                                                src={att.previewUrl} 
+                                                alt="evidence preview" 
+                                                className="max-w-xs border border-black p-1 object-contain"
+                                            />
+                                        )}
+                                    </div>
+                                )) : null}
+                                {(!data.evidence || data.evidence.length === 0) && (!localAttachments || localAttachments.length === 0) && (
+                                    <p className="text-[13px] text-black">No evidence files attached.</p>
+                                )}
                             </Section>
 
                             {/* Section 9: Officer Notes */}

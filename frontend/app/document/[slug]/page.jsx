@@ -183,7 +183,18 @@ export default function DocumentPage({ params }) {
 
         if (!messageText.trim() || isGuidanceTyping) return;
 
-        if (stopCounter >= 4) {
+        const userMsg = {
+            id: Date.now().toString(),
+            role: 'user',
+            content: messageText
+        };
+
+        setGuidanceMessages(prev => [...prev, userMsg]);
+        setGuidanceInput('');
+        // setIsGuidanceTyping(true);
+
+
+        if (stopCounter >= 5) {
 
             const formData = new FormData();
             console.log(docContent)
@@ -209,15 +220,6 @@ export default function DocumentPage({ params }) {
 
         } else {
 
-            const userMsg = {
-                id: Date.now().toString(),
-                role: 'user',
-                content: messageText
-            };
-
-            setGuidanceMessages(prev => [...prev, userMsg]);
-            setGuidanceInput('');
-            setIsGuidanceTyping(true);
 
             // Simulate AI response
             setTimeout(async () => {
@@ -564,6 +566,12 @@ export default function DocumentPage({ params }) {
                                                 <Send className="h-4 w-4" />
                                             </button>
                                         </form>
+                                        <div className='h-fit flex justify-center items-center'>
+                                            {stopCounter == 6 ? "Generating report..." : (
+                                                `remaining questions before generating report: ${6-stopCounter}`
+
+                                            )}
+                                            </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -638,6 +646,8 @@ export default function DocumentPage({ params }) {
                 isOpen={showReport}
                 onClose={() => setShowReport(false)}
                 data={response.data}
+                docId={slug}
+                localAttachments={attachments}
             />
         </Shell>
     );

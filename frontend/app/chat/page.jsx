@@ -83,7 +83,7 @@ export default function ChatPage() {
     formData.append("message", input);
     formData.append("conversation_history", conversationHistory);
 
-    if (messages.length >= 7) {
+    if (messages.length >= 12) {
         setShowGenerateReport(!showGenerateReport);
       }
 

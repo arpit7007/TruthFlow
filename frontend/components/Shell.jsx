@@ -68,7 +68,7 @@ export const Shell = ({ children, headerActions, showStatus = false }) => {
   }
 
   useEffect(() => {
-    if(session){
+    if(status == 'authenticated'){
       fetchHistory();
     }
   }, [])

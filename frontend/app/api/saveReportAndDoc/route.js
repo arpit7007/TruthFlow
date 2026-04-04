@@ -34,7 +34,7 @@ export async function POST(request) {
 
     const createDocument = await Document.create({
         note: encrypt(text),
-        report: encrypt(data.data)
+        report: data.data
     })
 
     const updateUserHistory = await User.findByIdAndUpdate(userId, { $push: { DocumentHistory: createDocument._id } });

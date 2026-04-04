@@ -1,5 +1,6 @@
 import connectDb from "../../connectDb";
 import User from "../../models/User";
+import Document from "../../models/Document"; 
 
 export async function GET(request) {
     await connectDb();

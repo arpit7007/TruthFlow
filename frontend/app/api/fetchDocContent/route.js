@@ -15,7 +15,7 @@ export async function GET(request) {
 
     if (document) {
         document.note = decrypt(document.note);
-        document.report = decrypt(document.report);
+        document.report = document.report;
     }
 
     return Response.json({ document: document });

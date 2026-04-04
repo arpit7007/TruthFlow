@@ -35,7 +35,7 @@ export async function POST(request) {
         docId,
         {
             note: encrypt(text),
-            report: encrypt(data.data)
+            report: data.data
         }, { returnDocument: "after" })
 
     console.log(updateDocument)
