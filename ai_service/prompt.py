@@ -4,16 +4,50 @@ def build_prompt(text, files):
     return f"""
 You are a legal documentation assistant.
 
-Your task is to convert the testimony into TWO outputs:
-1. A formal Victim Statement Report (text format)
-2. Structured JSON data
+Your task is to convert the testimony into a structured legal report in JSON format.
 
-Return ONLY JSON in the format below:
+Return ONLY valid JSON matching EXACTLY this schema:
 
 {{
-  "report_text": "string",
+  "heading": {{
+    "recording_datetime": "string or null",
+    "recorded_by": "TruthFlow"
+  }},
+
+  "victim_details": {{
+    "full_name": "string or null",
+    "date_of_birth": "string or null",
+    "gender": "string or null",
+    "address": "string or null",
+    "contact_number": "string or null",
+    "id_proof": "string or null"
+  }},
+
+  "incident_details": "string",
+
+  "accused": {{
+    "name": "string or null",
+    "age": "string or null",
+    "description": "string or null",
+    "relationship": "string or null"
+  }},
+
+  "witnesses": [
+    {{
+      "name": "string",
+      "contact": "string or null"
+    }}
+  ],
+
+  "medical": {{
+    "referred": "Yes/No/null",
+    "datetime": "string or null"
+  }},
+
+  "officer_notes": "string or null",
 
   "summary": "string or null",
+
   "timeline": [
     {{
       "event": "string",
@@ -44,66 +78,23 @@ Return ONLY JSON in the format below:
     }}
   ],
   "notes": "string or null"
+
 }}
 
 ---
 
-REPORT FORMAT INSTRUCTIONS (VERY IMPORTANT):
-
-Generate a formal report in this exact structure:
-
-FORMAT – VICTIM STATEMENT REPORT
-
-1. Heading  
-Date & Time of Recording Statement: (infer or null)  
-Recorded By: TruthFlow  
-
-2. Victim’s Details  
-Full Name: (if not available → null)  
-Date of Birth: (or null)  
-Gender: (or null)  
-Address: (or null)  
-Contact Number: (or null)  
-ID Proof Type & No.: (or null)  
-
-3. Incident Details (Victim Narrative)  
-Write in first person using Survivor instead of "I".  
-Keep it natural but structured.
-
-4. Description of Accused (if known)  
-Name:  
-Age:  
-Physical Description:  
-Relationship:  
-
-5. Witnesses (if any)  
-Include names if mentioned  
-
-6. Medical Examination  
-Mention hospital / doctor if available  
-
-7. Additional Notes by Officer  
-Include emotional state, confusion, memory gaps  
-
----
-
 STRICT RULES:
-- DO NOT skip any section
-- DO NOT invent details
-- Use null where info missing
-- Use neutral, non-graphic language
+- Extract ALL details from testimony
+- Do NOT invent missing data → use null
+- Maintain legal tone (neutral, non-graphic)
 - Convert "I" → "Survivor"
+- Keep incident_details in structured narrative format
+- Timeline must be chronological
+- Witnesses must be separated properly
+- Accused details must be extracted if present
+- Medical info must be extracted if mentioned
 
 ---
-
-IMPORTANT:
-- Use "Survivor" instead of "I" or "witness"
-- timeline.evidence must be array of file names only
-- evidence section contains detailed objects
-- linked_event must be descriptive text, not number
-- do not return empty strings, use null instead
-- Do NOT skip any detail
-- Map files to relevant events
 
 Testimony:
 {text}

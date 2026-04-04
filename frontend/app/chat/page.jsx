@@ -13,6 +13,9 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const [attachments, setAttachments] = useState([]);
+  // added count of questions to keep asking victim until they are ready to generate report
+  const [questionCount, setQuestionCount] = useState(0); 
+  const [showGenerateReport, setShowGenerateReport] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
   const scrollRef = useRef(null);
@@ -75,25 +78,50 @@ export default function ChatPage() {
     setAttachments([]);
     setIsTyping(true);
 
+    // Build conversation history string for context
+    const conversationHistory = messages
+      .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+      .join('\n');
 
     const formData = new FormData();
-    formData.append("message", input)
-    formData.append("conversation_history", JSON.stringify(messages))
+    formData.append("message", input);
+    formData.append("conversation_history", conversationHistory);
 
-    const response = await fetch("http://127.0.0.1:8000/chat", {
-      method: 'POST',
-      body: formData
-    });
-    const data = await response.json();
-    console.log("THE DATA FROM THE LLM IS: ", data);
+    try {
+      const response = await fetch("http://127.0.0.1:8000/chat", {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      console.log(data);
 
-    const assistantMsg = { 
-        id: `ai-${idCounter.current++}`, 
-        role: 'assistant', 
-        content: data.message 
+      if (data.success) {
+        const newQuestionCount = data.question_count || (questionCount + 1);
+        setQuestionCount(newQuestionCount);
+
+        const assistantMsg = { 
+          id: `ai-${idCounter.current++}`, 
+          role: 'assistant', 
+          content: data.message 
+        };
+        setMessages(prev => [...prev, assistantMsg]);
+        
+        // Show generate report button after the bot mentions it or at appropriate times
+        if (data.message.toLowerCase().includes('generate report') || data.message.toLowerCase().includes('click')) {
+          setShowGenerateReport(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      const errorMsg = {
+        id: `ai-${idCounter.current++}`,
+        role: 'assistant',
+        content: 'Sorry, there was an error processing your message. Please try again.'
       };
-      setMessages(prev => [...prev, assistantMsg]);
-      setIsTyping(false);
+      setMessages(prev => [...prev, errorMsg]);
+    }
+    
+    setIsTyping(false);
   };
 
   const handleClear = () => {
@@ -101,7 +129,48 @@ export default function ChatPage() {
       setMessages([{ id: '1', role: 'assistant', content: "Welcome to your secure truth sanctuary. I'm here to listen and help you document your perspective with complete privacy. What would you like to discuss?" }]);
       setAttachments([]);
       setInput('');
+      setQuestionCount(0);
+      setShowGenerateReport(false);
       idCounter.current = 2;
+    }
+  };
+
+  const handleGenerateReport = async () => {
+    try {
+      setIsTyping(true);
+      
+      // Build conversation history
+      const conversationHistory = messages
+        .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
+        .join('\n');
+
+      // Get initial testimony from first user message or use conversation summary
+      const firstUserMsg = messages.find(msg => msg.role === 'user');
+      const initialTestimony = firstUserMsg ? firstUserMsg.content : '';
+
+      const formData = new FormData();
+      formData.append("text", initialTestimony);
+      formData.append("conversation_history", conversationHistory);
+
+      const response = await fetch("http://127.0.0.1:8000/generate-report", {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await response.json();
+      console.log('Report generated:', data);
+
+      if (data.success) {
+        // TODO: Display the generated report or navigate to report view
+        alert('Report generated successfully! ' + JSON.stringify(data.data, null, 2));
+      } else {
+        alert('Error generating report: ' + data.error);
+      }
+    } catch (error) {
+      console.error('Error generating report:', error);
+      alert('Failed to generate report');
+    } finally {
+      setIsTyping(false);
     }
   };
 
@@ -126,11 +195,11 @@ export default function ChatPage() {
                     {msg.role === 'user' ? <User className="h-4 w-4" /> : <Bot className="h-4 w-4" />}
                   </div>
 
-                  <div className={`max-w-[85%] min-w-0 rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${msg.role === 'user'
+                  <div className={`max-w-[85%] rounded-[1.5rem] p-5 lg:p-6 shadow-xl border ${msg.role === 'user'
                     ? 'bg-primary text-white border-primary/20 rounded-tr-none'
                     : 'glass-card text-text-main border-white/10 rounded-tl-none backdrop-blur-3xl'
                     }`}>
-                    <p className={`text-sm md:text-base leading-relaxed break-words whitespace-pre-wrap ${msg.role === 'user' ? 'font-medium' : 'font-normal'}`}>
+                    <p className={`text-sm md:text-base leading-relaxed ${msg.role === 'user' ? 'font-medium' : 'font-normal'}`}>
                       {msg.content}
                     </p>
 
@@ -202,6 +271,19 @@ export default function ChatPage() {
           <div className="h-32 w-full bg-gradient-to-t from-background to-transparent" />
           <div className="bg-background pb-10 px-6">
             <div className="mx-auto max-w-2xl w-full pointer-events-auto">
+              {/* Generate Report Button */}
+              {showGenerateReport && (
+                <motion.button
+                  onClick={handleGenerateReport}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  disabled={isTyping}
+                  className="w-full mb-4 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isTyping ? '⏳ Generating Report...' : '📋 Generate Legal Report'}
+                </motion.button>
+              )}
+
               {/* Attachment Preview Bar */}
               <AnimatePresence>
                 {previews.length > 0 && (

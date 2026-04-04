@@ -19,9 +19,8 @@ router = APIRouter()
 @router.post("/generate-report")
 async def generate_report(
 #added fallback behaviour to use conversation history as testimony if explicit text is not provided, to make it easier for victims to share their story without needing to write a formal testimony upfront
-    text: str = Form(default=""),
-    conversation_history: str = Form(default=""),
-    files: Optional[List[UploadFile]] = File(None)
+    text: str = Form(...),
+    files: Optional[List[UploadFile]] = File(None)  # ✅ MULTIPLE FILES
 ):
     """
     Generate the final legal report from user input.
@@ -35,17 +34,10 @@ async def generate_report(
                 if file and file.filename:
                     file_names.append(file.filename)
 
-        # If no explicit text is provided, attempt to use conversation history as the core testimony.
-        primary_text = text.strip() if text.strip() else conversation_history.strip()
+        print(text)
 
-        if not primary_text and not file_names:
-            return {
-                "success": False,
-                "error": "Provide testimony text, conversation history, or at least one file to generate report."
-            }
-
-        # ✅ Build prompt with conversation context
-        prompt = build_prompt(primary_text, file_names, conversation_history)
+        # ✅ Build prompt
+        prompt = build_prompt(text, file_names)
 
         # ✅ Call LLM
         raw_output = call_llm(prompt)

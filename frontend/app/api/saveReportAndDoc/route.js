@@ -14,9 +14,13 @@ export async function POST(request) {
     const userData = await User.findById(userId);
     console.log(userData)
 
+    
+    // formData.append("victimDetails", JSON.stringify(userData));
+    
+    const combinedText = `${text}\n${JSON.stringify(userData)}`;
+    formData.set("text", combinedText);
+    
     console.log(formData);
-
-    formData.append("userData", JSON.stringify(userData));
 
     const response = await fetch("http://127.0.0.1:8000/generate-report", {
         method: "POST",
