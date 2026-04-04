@@ -5,8 +5,12 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shell } from '../../components/Shell';
 import { Send, User, Bot, Loader2, Mic, Paperclip, X, Trash2 } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function ChatPage() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [messages, setMessages] = useState([
     { id: '1', role: 'assistant', content: "Welcome to your secure truth sanctuary. I'm here to listen and help you document your perspective with complete privacy. What would you like to discuss?" }
   ]);
@@ -14,7 +18,7 @@ export default function ChatPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [attachments, setAttachments] = useState([]);
   // added count of questions to keep asking victim until they are ready to generate report
-  const [questionCount, setQuestionCount] = useState(0); 
+  const [questionCount, setQuestionCount] = useState(0);
   const [showGenerateReport, setShowGenerateReport] = useState(false);
   const fileInputRef = useRef(null);
   const messagesEndRef = useRef(null);
@@ -88,27 +92,31 @@ export default function ChatPage() {
     formData.append("conversation_history", conversationHistory);
 
     try {
-      const response = await fetch("http://127.0.0.1:8000/chat", {
-        method: 'POST',
-        body: formData
-      });
-      const data = await response.json();
-      console.log(data);
+      if (messages.length >= 7) {
+        setShowGenerateReport(!showGenerateReport);
+      } else {
+        const response = await fetch("http://127.0.0.1:8000/chat", {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        console.log(data);
 
-      if (data.success) {
-        const newQuestionCount = data.question_count || (questionCount + 1);
-        setQuestionCount(newQuestionCount);
+        if (data.success) {
+          const newQuestionCount = data.question_count || (questionCount + 1);
+          setQuestionCount(newQuestionCount);
 
-        const assistantMsg = { 
-          id: `ai-${idCounter.current++}`, 
-          role: 'assistant', 
-          content: data.message 
-        };
-        setMessages(prev => [...prev, assistantMsg]);
-        
-        // Show generate report button after the bot mentions it or at appropriate times
-        if (data.message.toLowerCase().includes('generate report') || data.message.toLowerCase().includes('click')) {
-          setShowGenerateReport(true);
+          const assistantMsg = {
+            id: `ai-${idCounter.current++}`,
+            role: 'assistant',
+            content: data.message
+          };
+          setMessages(prev => [...prev, assistantMsg]);
+
+          // Show generate report button after the bot mentions it or at appropriate times
+          if (data.message.toLowerCase().includes('generate report') || data.message.toLowerCase().includes('click')) {
+            setShowGenerateReport(true);
+          }
         }
       }
     } catch (error) {
@@ -119,9 +127,11 @@ export default function ChatPage() {
         content: 'Sorry, there was an error processing your message. Please try again.'
       };
       setMessages(prev => [...prev, errorMsg]);
+
     }
-    
     setIsTyping(false);
+
+
   };
 
   const handleClear = () => {
@@ -138,37 +148,34 @@ export default function ChatPage() {
   const handleGenerateReport = async () => {
     try {
       setIsTyping(true);
-      
-      // Build conversation history
-      const conversationHistory = messages
-        .map(msg => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`)
-        .join('\n');
 
-      // Get initial testimony from first user message or use conversation summary
-      const firstUserMsg = messages.find(msg => msg.role === 'user');
-      const initialTestimony = firstUserMsg ? firstUserMsg.content : '';
+      // Build conversation history
+      const formattedHistory = messages
+        .map(msg => `${msg.role === 'user' ? 'answer' : 'question'}: ${msg.content}`)
+        .join('\n\n');
 
       const formData = new FormData();
-      formData.append("text", initialTestimony);
-      formData.append("conversation_history", conversationHistory);
+      formData.append("text", formattedHistory);
+      if (session?.user?.id) {
+        formData.append("userId", session.user.id);
+      }
 
-      const response = await fetch("http://127.0.0.1:8000/generate-report", {
+      const response = await fetch("/api/saveNoteOnly", {
         method: 'POST',
         body: formData
       });
 
       const data = await response.json();
-      console.log('Report generated:', data);
+      console.log('Note saved:', data);
 
-      if (data.success) {
-        // TODO: Display the generated report or navigate to report view
-        alert('Report generated successfully! ' + JSON.stringify(data.data, null, 2));
+      if (data.docId) {
+        router.push(`/document/${data.docId}`);
       } else {
-        alert('Error generating report: ' + data.error);
+        alert('Error saving conversation');
       }
     } catch (error) {
-      console.error('Error generating report:', error);
-      alert('Failed to generate report');
+      console.error('Error saving conversation:', error);
+      alert('Failed to save conversation');
     } finally {
       setIsTyping(false);
     }
@@ -280,7 +287,7 @@ export default function ChatPage() {
                   disabled={isTyping}
                   className="w-full mb-4 px-6 py-3 bg-gradient-to-r from-primary to-secondary text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isTyping ? '⏳ Generating Report...' : '📋 Generate Legal Report'}
+                  {isTyping ? '⏳ Saving Session...' : '🛑 If ready, generate report!!'}
                 </motion.button>
               )}
 

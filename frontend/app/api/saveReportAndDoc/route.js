@@ -13,9 +13,6 @@ export async function POST(request) {
     // get user details
     const userData = await User.findById(userId);
     console.log(userData)
-
-    
-    // formData.append("victimDetails", JSON.stringify(userData));
     
     const combinedText = `${text}\n${JSON.stringify(userData)}`;
     formData.set("text", combinedText);

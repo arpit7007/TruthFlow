@@ -96,7 +96,8 @@ export default function DocumentPage({ params }) {
 
         const formData = new FormData();
         formData.append("text", text);
-        formData.append("docId", slug)
+        formData.append("docId", slug);
+        formData.append("userId", session.user.id);
 
         attachments.forEach((a, index) => {
             formData.append(`file_${index}`, a.file);
@@ -132,7 +133,7 @@ export default function DocumentPage({ params }) {
 
         const data = await response.json();
 
-        console.log(data)
+        console.log("-------------------", data)
         setResponse(data)
         setShowReport(true);
     }
@@ -307,7 +308,7 @@ export default function DocumentPage({ params }) {
                             onFocus={() => setIsFocused(true)}
                             onBlur={() => setIsFocused(false)}
                             onChange={(e) => setText(e.target.value)}
-                            placeholder="Begin documenting your story here..."
+                            placeholder="Review the conversation above. Add any other details you want to include, or click Generate Report..."
                             className="flex-1 w-full bg-white dark:bg-transparent p-10 text-lg md:text-xl leading-relaxed text-slate-900 dark:text-text-main focus:outline-none placeholder:text-slate-300 dark:placeholder:text-text-dim/40 transition-all resize-none custom-scrollbar"
                         />
 
